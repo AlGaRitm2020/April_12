@@ -5,7 +5,6 @@ WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 672, 608
 FPS = 50
 MAX_COUNT_OF_ENEMIES = 10
 
-
 ENEMY_EVENT_TYPE = 30
 
 
@@ -14,6 +13,7 @@ class Hero(pygame.sprite.Sprite):
     def __init__(self, position):
         pygame.sprite.Sprite.__init__(self)
         self.x, self.y = position
+        self.health = 100
 
     # получить координату
     def get_position(self):
@@ -78,7 +78,6 @@ class Game:
         self.hero = hero
         self.bullets = []
         self.enemies = []
-        self.enemies_coords = []
 
     # отрисовка всех динамичных объектов
     def render(self, screen):
@@ -111,47 +110,59 @@ class Game:
     def move_bullets(self):
 
         # проход по всем действующим пулям
-        for bullet in self.bullets:
+        for i, bullet in enumerate(self.bullets):
             bullet.set_position((bullet.get_position()[0], bullet.get_position()[1] + bullet.direction * 4))
 
             # выход пули за пределы экрана
             if bullet.get_position()[1] < 0:
-                del self.bullets[0]
-                # print(bullet.get_position(), self.enemies_coords)
-            if bullet.direction == -1:
-                for i, enemy in enumerate(self.enemies):
-                    if abs(enemy.get_position()[0] - bullet.get_position()[0]) < 10 and abs(enemy.get_position()[1] - bullet.get_position()[1]) < 10:
-                        del self.enemies[i]
-                        del self.enemies_coords[i]
+                del self.bullets[i]
 
+            # свои пули
+            if bullet.direction == -1:
+                for j, enemy in enumerate(self.enemies):
+                    if abs(enemy.get_position()[0] - bullet.get_position()[0]) < 10 and abs(
+                            enemy.get_position()[1] - bullet.get_position()[1]) < 10:
+                        # уничтожение врага и пули
+                        del self.enemies[j]
+                        del self.bullets[i]
+
+            # вражеские пули
+            else:
+                if abs(self.hero.get_position()[0] - bullet.get_position()[0]) < 10 and abs(
+                        self.hero.get_position()[1] - bullet.get_position()[1]) < 10:
+                    # cнятие здоровья у героя и уничтожение пули
+                    self.hero.health -= 1
+                    del self.bullets[i]
+
+                    print(f"HEALTH: {self.hero.health}")
+
+    # добавить врага
     def add_enemy(self, enemy):
         if len(self.enemies) <= MAX_COUNT_OF_ENEMIES:
-
             self.enemies.append(enemy)
 
     # движение врагов
     def move_enemies(self):
+        # просмотр каждого врага по отдельности
         for i, enemy in enumerate(self.enemies):
+
+            # движение от одной части экрана к другой
             if enemy.get_position()[0] > WINDOW_WIDTH:
                 enemy.direction = -1
             elif enemy.get_position()[0] < 0:
                 enemy.direction = 1
 
+            # увеличение счетчика стрельбы врага
             enemy.kd += 1
 
+            # выстрел врага
             if enemy.kd == 30:
                 self.bullets.append(Bullet(enemy.get_position(), 1))
                 enemy.kd = 0
 
+            # движение врага
             enemy.set_position((enemy.get_position()[0] + enemy.direction * 3, enemy.get_position()[1]))
-            if len(self.enemies_coords) > i:
-                self.enemies_coords[i] = enemy.get_position()
-            else:
-                self.enemies_coords.append(enemy.get_position())
 
-    # def move_enemy(self):
-    #     next_position = self.labyrinth.find_path_step(self.enemy.get_position(), self.hero.get_position())
-    #     self.enemy.set_position(next_position)
     #
     # def check_win(self):
     #     return self.labyrinth.get_tile_id(self.hero.get_position()) == self.labyrinth.finish_tile
@@ -162,15 +173,16 @@ class Game:
 
 #
 
-# def show_message(screen, message):
-#     font = pygame.font.Font(None, 50)
-#     text = font.render(message, True, (50, 70, 0))
-#     text_x = WINDOW_WIDTH // 2 - text.get_width() // 2
-#     text_y = WINDOW_HEIGHT // 2 - text.get_height() // 2
-#     text_w = text.get_width()
-#     text_h = text.get_height()
-#     pygame.draw.rect(screen, (200, 150, 50), (text_x - 10, text_y - 10, text_w + 20, text_h + 20))
-#     screen.blit(text, (text_x, text_y))
+def show_message(screen, message):
+
+    font = pygame.font.Font(None, 50)
+    text = font.render(message, True, (50, 70, 0))
+    text_x = WINDOW_WIDTH // 2 - text.get_width() // 2
+    text_y = WINDOW_HEIGHT // 2 - text.get_height() // 2
+    text_w = text.get_width()
+    text_h = text.get_height()
+    pygame.draw.rect(screen, (200, 150, 50), (text_x - 10, text_y - 10, text_w + 20, text_h + 20))
+    screen.blit(text, (text_x, text_y))
 
 
 def main():
@@ -189,20 +201,17 @@ def main():
     counter = 0
 
     running = True
-    game_over = False
     while running:
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == ENEMY_EVENT_TYPE and not game_over:
-                # game.move_enemy()
-                pass
-                # hero.render(screen)
 
-        if game_over is False:
-
-            game.move_hero()
+        # герой жив
+        if game.hero.health > 99:
             game.move_bullets()
+            game.move_hero()
+
             game.move_enemies()
             # print(counter)
             if counter % 100 == 0:
@@ -210,12 +219,22 @@ def main():
                 enemy = Enemy((random.randint(0, 600), random.randint(0, 50)))
                 game.add_enemy(enemy)
 
+            screen.fill((0, 0, 0))
+            game.render(screen)
+
+
+            clock.tick(FPS)
+            counter += 1
+
+        # конец игры
+        else:
+            show_message(screen, "GAME OVER")
+
         # Обновление
         # all_sprites.update()
         # for sprite in all_sprites:
         #     sprite.x -= 5
-        screen.fill((0, 0, 0))
-        game.render(screen)
+
         # if game.check_win():
         #     game_over = True
         #     show_message(screen, "YOU WON!")
@@ -224,8 +243,6 @@ def main():
         #     show_message(screen, "YOU LOST!")
 
         pygame.display.flip()
-        clock.tick(FPS)
-        counter += 1
     pygame.quit()
 
 
