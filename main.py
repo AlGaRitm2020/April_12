@@ -1,8 +1,8 @@
 import pygame
 import random
-WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 672, 608
-FPS = 50
-MAX_COUNT_OF_ENEMIES = 10
+WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1000, 800
+FPS = 60
+MAX_COUNT_OF_ENEMIES = 5
 ENEMY_EVENT_TYPE = 30
 # класс главного героя
 class Hero(pygame.sprite.Sprite):
@@ -101,7 +101,7 @@ class Game:
                 if abs(self.hero.get_position()[0] - bullet.get_position()[0]) < 10 and abs(
                         self.hero.get_position()[1] - bullet.get_position()[1]) < 10:
                     # cнятие здоровья у героя и уничтожение пули
-                    self.hero.health -= 1
+                    self.hero.health -= random.randint(0, 20)
                     del self.bullets[i]
                     print(f"HEALTH: {self.hero.health}")
     # добавить врага
@@ -144,7 +144,7 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
     # all_sprites = pygame.sprite.Group()
-    hero = Hero((150, 159))
+    hero = Hero((WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
     game = Game(hero)
     # all_sprites.add(labyrinth)
     # all_sprites.add(hero)
