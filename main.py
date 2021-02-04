@@ -1,5 +1,5 @@
 import pygame
-
+import random
 
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 672, 608
 FPS = 15
@@ -29,10 +29,11 @@ class Hero(pygame.sprite.Sprite):
 
 # класс пули
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, position, owner):
+    def __init__(self, position, direction):
         pygame.sprite.Sprite.__init__(self)
         self.x, self.y = position
-        self.owner = owner
+        self.direction = direction
+
 
     # получить координату
     def get_position(self):
@@ -44,15 +45,17 @@ class Bullet(pygame.sprite.Sprite):
 
     # отрисовка
     def render(self, screen):
-        pygame.draw.circle(screen, (0, 0, 255), (self.x, self.y), 5)
-
+        if self.direction == -1:
+            pygame.draw.circle(screen, (0, 0, 255), (self.x, self.y), 5)
+        else:
+            pygame.draw.circle(screen, (255, 0, 255), (self.x, self.y), 5)
 # класс врага
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, position):
         pygame.sprite.Sprite.__init__(self)
         self.x, self.y = position
-        self.delay = 100
-        pygame.time.set_timer(ENEMY_EVENT_TYPE, self.delay)
+        self.direction = 1
+        self.kd = 0
 
     # получить координату
     def get_position(self):
@@ -68,15 +71,18 @@ class Enemy(pygame.sprite.Sprite):
 
 # класс игры
 class Game:
-    def __init__(self, hero, enemy):
+    def __init__(self, hero):
         self.hero = hero
-        self.enemy = enemy
         self.bullets = []
+        self.enemies = []
+        self.enemies_coords = []
 
     # отрисовка всех динамичных объектов
     def render(self, screen):
         self.hero.render(screen)
-        self.enemy.render(screen)
+        for enemy in self.enemies:
+            enemy.render(screen)
+
         for bullet in self.bullets:
             bullet.render(screen)
 
@@ -94,8 +100,7 @@ class Game:
         if pygame.key.get_pressed()[pygame.K_s]:
             next_y += 10
         if pygame.key.get_pressed()[pygame.K_SPACE]:
-            print(self.bullets)
-            self.bullets.append(Bullet((next_x, next_y), "hero"))
+            self.bullets.append(Bullet((next_x, next_y), -1))
 
         self.hero.set_position((next_x, next_y))
 
@@ -104,14 +109,39 @@ class Game:
 
         # проход по всем действующим пулям
         for bullet in self.bullets:
-            bullet.set_position((bullet.get_position()[0], bullet.get_position()[1] - 15))
+            bullet.set_position((bullet.get_position()[0], bullet.get_position()[1] + bullet.direction * 15))
 
             # выход пули за пределы экрана
             if bullet.get_position()[1] < 0:
                 del self.bullets[0]
+            if bullet.get_position() in self.enemies_coords:
+                # print("shot")
+                for i, enemy in enumerate(self.enemies):
+                    if enemy.get_position() == bullet.get_position():
+                        del self.enemies[i]
 
+    def add_enemy(self, enemy):
+        self.enemies.append(enemy)
 
+    # движение врагов
+    def move_enemies(self):
+        for i, enemy in enumerate(self.enemies):
+            if enemy.get_position()[0] > WINDOW_WIDTH:
+                enemy.direction = -1
+            elif enemy.get_position()[0] < 0:
+                enemy.direction = 1
 
+            enemy.kd += 1
+
+            if enemy.kd == 30:
+                self.bullets.append(Bullet(enemy.get_position(), 1))
+                enemy.kd = 0
+
+            enemy.set_position((enemy.get_position()[0] + 10 * enemy.direction, enemy.get_position()[1]))
+            if len(self.enemies_coords) > i:
+                self.enemies_coords[i] = enemy.get_position()
+            else:
+                self.enemies_coords.append(enemy.get_position())
 
 
     # def move_enemy(self):
@@ -143,8 +173,8 @@ def main():
     screen = pygame.display.set_mode(WINDOW_SIZE)
     # all_sprites = pygame.sprite.Group()
     hero = Hero((150, 159))
-    enemy = Enemy((19, 9))
-    game = Game(hero, enemy)
+
+    game = Game(hero)
 
     # all_sprites.add(labyrinth)
     # all_sprites.add(hero)
@@ -152,6 +182,7 @@ def main():
 
 
     clock = pygame.time.Clock()
+    counter = 0
 
     running = True
     game_over = False
@@ -168,6 +199,12 @@ def main():
 
             game.move_hero()
             game.move_bullets()
+            game.move_enemies()
+            # print(counter)
+            if counter % 100 ==0:
+                counter = 0
+                enemy = Enemy((random.randint(0, 600), random.randint(0, 250)))
+                game.add_enemy(enemy)
 
 
         # Обновление
@@ -185,6 +222,7 @@ def main():
 
         pygame.display.flip()
         clock.tick(FPS)
+        counter += 1
     pygame.quit()
 
 
