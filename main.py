@@ -10,6 +10,7 @@ class Hero(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.x, self.y = position
         self.health = 100
+        self.bullets_count = 0
     # получить координату
     def get_position(self):
         return self.x, self.y
@@ -78,7 +79,10 @@ class Game:
         if pygame.key.get_pressed()[pygame.K_s]:
             next_y += 10
         if pygame.key.get_pressed()[pygame.K_SPACE]:
-            self.bullets.append(Bullet((next_x, next_y), -1))
+            if self.hero.bullets_count < 20:
+                self.bullets.append(Bullet((next_x, next_y), -1))
+                self.hero.bullets_count += 1
+
         self.hero.set_position((next_x, next_y))
     # движение пули
     def move_bullets(self):
@@ -86,7 +90,9 @@ class Game:
         for i, bullet in enumerate(self.bullets):
             bullet.set_position((bullet.get_position()[0], bullet.get_position()[1] + bullet.direction * 4))
             # выход пули за пределы экрана
-            if bullet.get_position()[1] < 0:
+            if bullet.get_position()[1] < 0 or bullet.get_position()[1] > WINDOW_HEIGHT:
+                if bullet.direction == -1:
+                    self.hero.bullets_count -= 1
                 del self.bullets[i]
             # свои пули
             if bullet.direction == -1:
@@ -96,6 +102,7 @@ class Game:
                         # уничтожение врага и пули
                         del self.enemies[j]
                         del self.bullets[i]
+                        self.hero.bullets_count -= 1
             # вражеские пули
             else:
                 if abs(self.hero.get_position()[0] - bullet.get_position()[0]) < 10 and abs(
