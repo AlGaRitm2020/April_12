@@ -67,16 +67,20 @@ class Game:
             enemy.render(screen)
         for bullet in self.bullets:
             bullet.render(screen)
-    # движение главного героя
+    # движение главного геро7я
     def move_hero(self):
         next_x, next_y = self.hero.get_position()
+        if next_x < 0:
+            next_x = WINDOW_WIDTH
+        if next_x > WINDOW_WIDTH:
+            next_x = 0
         if pygame.key.get_pressed()[pygame.K_a]:
             next_x -= 10
         if pygame.key.get_pressed()[pygame.K_d]:
             next_x += 10
         if pygame.key.get_pressed()[pygame.K_w] and self.hero.get_position()[1] > 10:
             next_y -= 10
-        if pygame.key.get_pressed()[pygame.K_s]:
+        if pygame.key.get_pressed()[pygame.K_s]and self.hero.get_position()[1] < WINDOW_HEIGHT - 10:
             next_y += 10
         if pygame.key.get_pressed()[pygame.K_SPACE]:
             if self.hero.bullets_count < 20:
