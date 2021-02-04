@@ -182,7 +182,7 @@ def show_message(screen, message):
     text_w = text.get_width()
     text_h = text.get_height()
     pygame.draw.rect(screen, (200, 150, 50), (text_x - 10, text_y - 10, text_w + 20, text_h + 20))
-    screen.blit(text, (text_x, text_y))
+    screen.blit(text, (text_x, text_y)
 
 def main():
     pygame.init()
