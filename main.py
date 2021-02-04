@@ -208,7 +208,7 @@ def main():
                 running = False
 
         # герой жив
-        if game.hero.health > 99:
+        if game.hero.health > 0:
             game.move_bullets()
             game.move_hero()
 
