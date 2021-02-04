@@ -67,9 +67,10 @@ class Game:
             enemy.render(screen)
         for bullet in self.bullets:
             bullet.render(screen)
-    # движение главного геро7я
+    # движение главного героя
     def move_hero(self):
         next_x, next_y = self.hero.get_position()
+        # рамки сверху и снизу для героя
         if next_x < 0:
             next_x = WINDOW_WIDTH
         if next_x > WINDOW_WIDTH:
@@ -82,8 +83,8 @@ class Game:
             next_y -= 10
         if pygame.key.get_pressed()[pygame.K_s]and self.hero.get_position()[1] < WINDOW_HEIGHT - 10:
             next_y += 10
-        if pygame.key.get_pressed()[pygame.K_SPACE]:
-            if self.hero.bullets_count < 20:
+        if pygame.key.get_pressed()[pygame.K_SPACE] or pygame.mouse.get_pressed() == (1,0,0):
+            if self.hero.bullets_count < 15:
                 self.bullets.append(Bullet((next_x, next_y), -1))
                 self.hero.bullets_count += 1
 
@@ -112,7 +113,7 @@ class Game:
                 if abs(self.hero.get_position()[0] - bullet.get_position()[0]) < 10 and abs(
                         self.hero.get_position()[1] - bullet.get_position()[1]) < 10:
                     # cнятие здоровья у героя и уничтожение пули
-                    self.hero.health -= random.randint(0, 20)
+                    self.hero.health -= random.randint(20, 40)
                     if self.hero.health < 0:
                         self.hero.health = 0
                     del self.bullets[i]
@@ -169,7 +170,6 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-
         # герой жив
         if game.hero.health > 99:
             pass
