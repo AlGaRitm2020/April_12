@@ -74,7 +74,7 @@ class Game:
             next_x -= 10
         if pygame.key.get_pressed()[pygame.K_d]:
             next_x += 10
-        if pygame.key.get_pressed()[pygame.K_w]:
+        if pygame.key.get_pressed()[pygame.K_w] and self.hero.get_position()[1] > 10:
             next_y -= 10
         if pygame.key.get_pressed()[pygame.K_s]:
             next_y += 10
@@ -109,6 +109,8 @@ class Game:
                         self.hero.get_position()[1] - bullet.get_position()[1]) < 10:
                     # cнятие здоровья у героя и уничтожение пули
                     self.hero.health -= random.randint(0, 20)
+                    if self.hero.health < 0:
+                        self.hero.health = 0
                     del self.bullets[i]
                     print(f"HEALTH: {self.hero.health}")
     # добавить врага
