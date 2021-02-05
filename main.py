@@ -26,7 +26,7 @@ class Hero(pygame.sprite.Sprite):
         self.damage = 1
 
         # радиус главного героя
-        self.radius = 25
+        self.radius = 30
 
     # получить координату
     def get_position(self):
@@ -59,7 +59,7 @@ class Bullet(pygame.sprite.Sprite):
         self.damage = damage
 
         # радиус пули
-        self.radius = 5
+        self.radius = 7
 
     # получить координату
     def get_position(self):
@@ -71,10 +71,15 @@ class Bullet(pygame.sprite.Sprite):
 
     # отрисовка
     def render(self, screen):
+        global image_bullet, image_bullet_2
         if self.direction == -1:
-            pygame.draw.circle(screen, (0, 0, 255), (self.x, self.y), self.radius)
+            self.image = pygame.transform.scale(image_bullet, (25, 60))
+            self.rect = self.image.get_rect(center=(self.x, self.y))
+            return (self.image, self.rect)
         else:
-            pygame.draw.circle(screen, (255, 0, 255), (self.x, self.y), self.radius)
+            self.image = pygame.transform.scale(image_bullet_2, (25, 60))
+            self.rect = self.image.get_rect(center=(self.x, self.y))
+            return (self.image, self.rect)
 
 
 # класс врага
@@ -108,7 +113,7 @@ class Enemy(pygame.sprite.Sprite):
         self.damage = 1
 
         # радиус врага
-        self.radius = 12
+        self.radius = 25
 
         # удерживаимая дистанция до главного героя по оси x
         self.distanse = random.randint(-150, 150)
@@ -176,7 +181,7 @@ class Buff(pygame.sprite.Sprite):
         self.radius = 15
 
         # скорость баффа
-        self.speed = random.randint(5, 10)
+        self.speed = random.randint(1, 5)
 
         # тип баффа
         self.type = type
@@ -191,17 +196,42 @@ class Buff(pygame.sprite.Sprite):
 
     # отрисовка
     def render(self, screen):
+        global image_buff
         if self.type == 0:
-            pygame.draw.circle(screen, (0, 255, 0), (self.x, self.y), self.radius)
+            self.image = pygame.transform.scale(image_buff, (50, 50))
+            self.rect = self.image.get_rect()
+            return (self.image, self.rect)
         else:
-             pygame.draw.circle(screen, (0, 255, 255), (self.x, self.y), self.radius)
+            self.image = pygame.transform.scale(image_buff, (50, 50))
+            self.rect = self.image.get_rect(center=(self.x, self.y))
+            return (self.image, self.rect)
+
+class BG(pygame.sprite.Sprite):
+    def __init__(self, position):
+        pygame.sprite.Sprite.__init__(self)
+        # координаты фона
+        self.x, self.y = position
+
+    # получить координату
+    def get_position(self):
+        return self.x, self.y
+
+    # установить координату
+    def set_position(self, position):
+        self.x, self.y = position
+
+    # отрисовка
+    def render(self, screen):
+        global image_bg
+        self.image = pygame.transform.scale(image_bg, (WINDOW_WIDTH, WINDOW_HEIGHT))
+        self.rect = self.image.get_rect()
+        return (self.image, self.rect)
 
 # класс игры
 class Game:
     def __init__(self, hero, screen):
         # холст
         self.screen = screen
-
         # все динамичные объекты
         self.hero = hero
         self.bullets = []
@@ -438,15 +468,22 @@ def show_message(screen, message):
 
 
 def main():
-    global image_player, image_enemy, image_asteroid
+    global image_player, image_enemy, image_asteroid, image_bullet, image_bullet_2, image_bg, image_buff
     pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
-    # изображение объектов
-    image_player = pygame.image.load('img/ship1-min.png').convert_alpha()
+    # ---------изображение объектов---------
+    image_player = pygame.image.load('img/ship-min.png').convert_alpha()
     image_enemy = pygame.image.load('img/shipB1.png').convert_alpha()
     image_asteroid = pygame.image.load('img/asteroid.png').convert_alpha()
+    image_bullet = pygame.image.load('img/bullet_N.png').convert_alpha()
+    image_bullet_2 = pygame.image.load('img/bullet_N2.png').convert_alpha()
+    image_bg = pygame.image.load("img/bg-min.png").convert_alpha()
+    image_buff = pygame.image.load("img/buff.png").convert_alpha()
+    #----------
+
     # all_sprites = pygame.sprite.Group()
     hero = Hero((WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
+    bg = BG((0,0))
     game = Game(hero, screen)
     # all_sprites.add(labyrinth)
     # all_sprites.add(hero)
@@ -475,7 +512,6 @@ def main():
             # создание врага
             if event % 100 == 1:
                 enemy = Enemy((random.randint(0, 600), random.randint(0, 50)))
-
                 game.add_enemy(enemy)
             # создание астероида
             if event % 100 == 2:
@@ -487,6 +523,7 @@ def main():
 
             screen.fill((0, 0, 0))
             #---- СПРАЙТЫ----
+            screen.blit(bg.render(screen)[0], bg.render(screen)[1])
             # применение спрайта для героя
             screen.blit(hero.render(screen)[0], hero.render(screen)[1])
             # применение спрайтов для врагов
@@ -494,6 +531,12 @@ def main():
                 screen.blit(enemy.render(screen)[0], enemy.render(screen)[1])
             for asteroid in game.asteroids:
                 screen.blit(asteroid.render(screen)[0], asteroid.render(screen)[1])
+            for bullet in game.bullets:
+                screen.blit(bullet.render(screen)[0], bullet.render(screen)[1])
+                screen.blit(bullet.render(screen)[0], bullet.render(screen)[1])
+            for buff in game.buffs:
+                screen.blit(buff.render(screen)[0], buff.render(screen)[1])
+                screen.blit(buff.render(screen)[0], buff.render(screen)[1])
             #--------
             game.render(screen)
             clock.tick(FPS)
