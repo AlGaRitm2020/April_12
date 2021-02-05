@@ -100,6 +100,9 @@ class Enemy(pygame.sprite.Sprite):
         # радиус врага
         self.radius = 12
 
+        # удерживаимая дистанция до главного героя по оси x
+        self.distanse = random.randint(-150, 150)
+
     # получить координату
     def get_position(self):
         return self.x, self.y
@@ -262,7 +265,7 @@ class Game:
                 for j, asteroid in enumerate(self.asteroids):
                     if abs(asteroid.get_position()[0] - bullet.get_position()[
                         0]) < asteroid.radius + bullet.radius and abs(
-                            asteroid.get_position()[1] - bullet.get_position()[1]) < asteroid.radius + bullet.radius:
+                        asteroid.get_position()[1] - bullet.get_position()[1]) < asteroid.radius + bullet.radius:
                         # уничтожение пули и нанесение урона астероиду
                         del self.bullets[i]
                         asteroid.hp -= self.hero.damage
@@ -276,7 +279,7 @@ class Game:
             else:
                 if abs(self.hero.get_position()[0] - bullet.get_position()[
                     0]) < self.hero.radius + bullet.radius and abs(
-                        self.hero.get_position()[1] - bullet.get_position()[1]) < self.hero.radius + bullet.radius:
+                    self.hero.get_position()[1] - bullet.get_position()[1]) < self.hero.radius + bullet.radius:
                     # уничтожение пули
                     self.hero.health -= bullet.damage
 
@@ -292,10 +295,11 @@ class Game:
     def move_enemies(self):
         # просмотр каждого врага по отдельности
         for i, enemy in enumerate(self.enemies):
-            # движение от одной части экрана к другой
-            if enemy.get_position()[0] > WINDOW_WIDTH:
+
+            # удерживание постоянной дистанции до главного героя
+            if enemy.get_position()[0] > self.hero.get_position()[0] + enemy.distanse:
                 enemy.direction = -1
-            elif enemy.get_position()[0] < 0:
+            else:
                 enemy.direction = 1
             # увеличение счетчика стрельбы врага
             enemy.kd_counter += 1
@@ -317,7 +321,7 @@ class Game:
             # столкновение астероида с главным героем
             if abs(asteroid.get_position()[0] - self.hero.get_position()[
                 0]) < asteroid.radius + self.hero.radius and abs(
-                    asteroid.get_position()[1] - self.hero.get_position()[1]) < asteroid.radius + self.hero.radius:
+                asteroid.get_position()[1] - self.hero.get_position()[1]) < asteroid.radius + self.hero.radius:
                 # уничтожение астероида
                 del self.asteroids[i]
 
