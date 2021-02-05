@@ -82,14 +82,23 @@ class Enemy(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         # координаты врага
         self.x, self.y = position
-        # направление по оси x(увеличение или уменьшение)
-        self.direction = random.choice([-1, 1])
+
+        # изменение координат во времени
+        self.dx = 0
+        self.dy = 0
+
+        self.speed = random.randint(1, 6)
+
+        # счетчик времени для событий врага
+        self.timer = 0
 
         # счетчик для выстрела
         self.kd_counter = 0
 
         # продолжительность перезарядки
         self.reload = random.randint(15, 45)
+
+        self.attack_duration = None
 
         # здоровье врага
         self.hp = 1
@@ -296,11 +305,40 @@ class Game:
         # просмотр каждого врага по отдельности
         for i, enemy in enumerate(self.enemies):
 
-            # удерживание постоянной дистанции до главного героя
-            if enemy.get_position()[0] > self.hero.get_position()[0] + enemy.distanse:
-                enemy.direction = -1
+            # генерация события
+            event = random.randint(0, 100000)
+
+            # если атака не активирована
+            if enemy.timer == 0:
+
+                # начать атаку
+                if event % 150 == 1:
+                    enemy.attack_duration = random.randint(100, 300)
+                    enemy.dy = enemy.speed
+                    enemy.timer += 1
+
+                # состояние полной боеготовности
+                # удерживание постоянной дистанции до главного героя
+                if enemy.get_position()[0] > self.hero.get_position()[0] + enemy.distanse:
+                    enemy.dx = -1 * enemy.speed
+                else:
+                    enemy.dx = enemy.speed
+
+            # режим атаки
             else:
-                enemy.direction = 1
+                # счетчик времени на атаку
+                enemy.timer += 1
+
+                # половина атаки
+                if enemy.timer == enemy.attack_duration // 2:
+                    # возвращение на исходную позицию
+                    enemy.dy = -1 * enemy.speed
+
+                # прекращение атаки
+                if enemy.timer == enemy.attack_duration:
+                    enemy.timer = 0
+                    enemy.dy = 0
+
             # увеличение счетчика стрельбы врага
             enemy.kd_counter += 1
             # выстрел врага
@@ -308,7 +346,10 @@ class Game:
                 self.bullets.append(Bullet(enemy.get_position(), 1, enemy.damage))
                 enemy.kd_counter = 0
             # движение врага
-            enemy.set_position((enemy.get_position()[0] + enemy.direction * 3, enemy.get_position()[1]))
+            enemy.set_position((enemy.get_position()[0] + enemy.dx, enemy.get_position()[1] + enemy.dy))
+
+            if not (0 <= enemy.get_position()[0] <= WINDOW_WIDTH):
+                enemy.dx *= -1
 
     # движение астероидов
     def move_asteroids(self):
