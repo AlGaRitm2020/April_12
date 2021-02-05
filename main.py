@@ -8,11 +8,11 @@ MAX_COUNT_OF_ENEMIES = 5
 ENEMY_EVENT_TYPE = 30
 
 
+
 # класс главного героя
 class Hero(pygame.sprite.Sprite):
     def __init__(self, position):
         pygame.sprite.Sprite.__init__(self)
-
         # координаты главного героя
         self.x, self.y = position
 
@@ -38,8 +38,8 @@ class Hero(pygame.sprite.Sprite):
 
     # отрисовка
     def render(self, screen):
-        self.image = pygame.image.load('img/ship1.png').convert_alpha()
-        self.image = pygame.transform.scale(self.image, (60, 70))
+        global image_player
+        self.image = pygame.transform.scale(image_player, (60, 70))
         self.rect = self.image.get_rect(center=(self.x, self.y))
         return (self.image, self.rect)
 
@@ -123,7 +123,10 @@ class Enemy(pygame.sprite.Sprite):
 
     # отрисовка
     def render(self, screen):
-        pygame.draw.circle(screen, (255, 0, 0), (self.x, self.y), self.radius)
+        global image_enemy
+        self.image = pygame.transform.scale(image_enemy, (60, 70))
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+        return (self.image, self.rect)
 
 
 # класс астероида
@@ -154,7 +157,10 @@ class Asteroid(pygame.sprite.Sprite):
 
     # отрисовка
     def render(self, screen):
-        pygame.draw.circle(screen, (110, 110, 110), (self.x, self.y), self.radius)
+        global image_asteroid
+        self.image = pygame.transform.scale(image_asteroid, (60, 70))
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+        return (self.image, self.rect)
 
 
 # класс пули
@@ -188,8 +194,7 @@ class Buff(pygame.sprite.Sprite):
         if self.type == 0:
             pygame.draw.circle(screen, (0, 255, 0), (self.x, self.y), self.radius)
         else:
-            pygame.draw.circle(screen, (0, 255, 255), (self.x, self.y), self.radius)
-
+             pygame.draw.circle(screen, (0, 255, 255), (self.x, self.y), self.radius)
 
 # класс игры
 class Game:
@@ -203,7 +208,6 @@ class Game:
         self.enemies = []
         self.asteroids = []
         self.buffs = []
-
     # отрисовка всех динамичных объектов
     def render(self, screen):
         # отрисовка главного героя
@@ -360,6 +364,8 @@ class Game:
             if not (0 <= enemy.get_position()[0] <= WINDOW_WIDTH):
                 enemy.dx *= -1
 
+
+
     # движение астероидов
     def move_asteroids(self):
         # просмотр каждого астероида по отдельности
@@ -397,7 +403,7 @@ class Game:
 
                 # активация баффа
                 if buff.type == "HP":
-                    self.hero.health += 1
+                    self.hero.health = 100
 
                 # удалаение баффа
                 del self.buffs[i]
@@ -432,8 +438,13 @@ def show_message(screen, message):
 
 
 def main():
+    global image_player, image_enemy, image_asteroid
     pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
+    # изображение объектов
+    image_player = pygame.image.load('img/ship1-min.png').convert_alpha()
+    image_enemy = pygame.image.load('img/shipB1.png').convert_alpha()
+    image_asteroid = pygame.image.load('img/asteroid.png').convert_alpha()
     # all_sprites = pygame.sprite.Group()
     hero = Hero((WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
     game = Game(hero, screen)
@@ -464,6 +475,7 @@ def main():
             # создание врага
             if event % 100 == 1:
                 enemy = Enemy((random.randint(0, 600), random.randint(0, 50)))
+
                 game.add_enemy(enemy)
             # создание астероида
             if event % 100 == 2:
@@ -474,8 +486,15 @@ def main():
                 game.add_buff(buff)
 
             screen.fill((0, 0, 0))
-            # применение спрайтов
+            #---- СПРАЙТЫ----
+            # применение спрайта для героя
             screen.blit(hero.render(screen)[0], hero.render(screen)[1])
+            # применение спрайтов для врагов
+            for enemy in game.enemies:
+                screen.blit(enemy.render(screen)[0], enemy.render(screen)[1])
+            for asteroid in game.asteroids:
+                screen.blit(asteroid.render(screen)[0], asteroid.render(screen)[1])
+            #--------
             game.render(screen)
             clock.tick(FPS)
 
