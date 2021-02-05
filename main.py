@@ -1,5 +1,6 @@
 import pygame
 import random
+import time
 
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1000, 800
 FPS = 60
@@ -192,7 +193,10 @@ class Buff(pygame.sprite.Sprite):
 
 # класс игры
 class Game:
-    def __init__(self, hero):
+    def __init__(self, hero, screen):
+        # холст
+        self.screen = screen
+
         # все динамичные объекты
         self.hero = hero
         self.bullets = []
@@ -237,10 +241,15 @@ class Game:
             next_y -= 10
         if pygame.key.get_pressed()[pygame.K_s] and self.hero.get_position()[1] < WINDOW_HEIGHT - 10:
             next_y += 10
+            # pygame.draw.circle(self.screen, pygame.Color("Green"), (100,100), 100)
+            # show_message(self.screen,"Good game")
+            # time.sleep(3)
         if pygame.key.get_pressed()[pygame.K_SPACE] or pygame.mouse.get_pressed() == (1, 0, 0):
-            if self.hero.bullets_count < 20:
+            if self.hero.bullets_count < 320:
                 self.bullets.append(Bullet((next_x, next_y), -1, self.hero.damage))
-                self.hero.bullets_count += 1
+                self.hero.bullets_count += 32
+        if self.hero.bullets_count >= 0:
+            self.hero.bullets_count -= 1
         # изменить координаты
         self.hero.set_position((next_x, next_y))
 
@@ -269,7 +278,7 @@ class Game:
                         if enemy.hp == 0:
                             del self.enemies[j]
                         # увеличение счетчика пуль главного героя
-                        self.hero.bullets_count -= 1
+                        # self.hero.bullets_count -= 1
                 # стрельба по астероидам
                 for j, asteroid in enumerate(self.asteroids):
                     if abs(asteroid.get_position()[0] - bullet.get_position()[
@@ -427,7 +436,7 @@ def main():
     screen = pygame.display.set_mode(WINDOW_SIZE)
     # all_sprites = pygame.sprite.Group()
     hero = Hero((WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
-    game = Game(hero)
+    game = Game(hero, screen)
     # all_sprites.add(labyrinth)
     # all_sprites.add(hero)
     # all_sprites.add(enemy)
