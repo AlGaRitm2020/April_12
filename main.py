@@ -25,7 +25,7 @@ class Hero(pygame.sprite.Sprite):
         self.damage = 1
 
         # радиус главного героя
-        self.radius = 12
+        self.radius = 25
 
     # получить координату
     def get_position(self):
@@ -37,7 +37,10 @@ class Hero(pygame.sprite.Sprite):
 
     # отрисовка
     def render(self, screen):
-        pygame.draw.circle(screen, (255, 255, 255), (self.x, self.y), self.radius)
+        self.image = pygame.image.load('img/ship1.png').convert_alpha()
+        self.image = pygame.transform.scale(self.image, (60, 70))
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+        return (self.image, self.rect)
 
 
 # класс пули
@@ -80,7 +83,7 @@ class Enemy(pygame.sprite.Sprite):
         # координаты врага
         self.x, self.y = position
         # направление по оси x(увеличение или уменьшение)
-        self.direction = 1
+        self.direction = random.choice([-1, 1])
 
         # счетчик для выстрела
         self.kd_counter = 0
@@ -222,7 +225,7 @@ class Game:
             next_y -= 10
         if pygame.key.get_pressed()[pygame.K_s] and self.hero.get_position()[1] < WINDOW_HEIGHT - 10:
             next_y += 10
-        if pygame.key.get_pressed()[pygame.K_SPACE]:
+        if pygame.key.get_pressed()[pygame.K_SPACE] or pygame.mouse.get_pressed() == (1, 0, 0):
             if self.hero.bullets_count < 20:
                 self.bullets.append(Bullet((next_x, next_y), -1, self.hero.damage))
                 self.hero.bullets_count += 1
@@ -244,8 +247,8 @@ class Game:
             if bullet.direction == -1:
                 # стрельба по врагам
                 for j, enemy in enumerate(self.enemies):
-                    if abs(enemy.get_position()[0] - bullet.get_position()[0]) < enemy.radius + bullet.radius  and abs(
-                            enemy.get_position()[1] - bullet.get_position()[1]) < enemy.radius + bullet.radius :
+                    if abs(enemy.get_position()[0] - bullet.get_position()[0]) < enemy.radius + bullet.radius and abs(
+                            enemy.get_position()[1] - bullet.get_position()[1]) < enemy.radius + bullet.radius:
                         # уничтожение пули и нанесение урона врагу
                         del self.bullets[i]
                         enemy.hp -= self.hero.damage
@@ -257,7 +260,8 @@ class Game:
                         self.hero.bullets_count -= 1
                 # стрельба по астероидам
                 for j, asteroid in enumerate(self.asteroids):
-                    if abs(asteroid.get_position()[0] - bullet.get_position()[0]) < asteroid.radius + bullet.radius and abs(
+                    if abs(asteroid.get_position()[0] - bullet.get_position()[
+                        0]) < asteroid.radius + bullet.radius and abs(
                             asteroid.get_position()[1] - bullet.get_position()[1]) < asteroid.radius + bullet.radius:
                         # уничтожение пули и нанесение урона астероиду
                         del self.bullets[i]
@@ -270,7 +274,8 @@ class Game:
                         self.hero.bullets_count -= 1
             # вражеские пули
             else:
-                if abs(self.hero.get_position()[0] - bullet.get_position()[0]) < self.hero.radius + bullet.radius and abs(
+                if abs(self.hero.get_position()[0] - bullet.get_position()[
+                    0]) < self.hero.radius + bullet.radius and abs(
                         self.hero.get_position()[1] - bullet.get_position()[1]) < self.hero.radius + bullet.radius:
                     # уничтожение пули
                     self.hero.health -= bullet.damage
@@ -310,7 +315,8 @@ class Game:
                     0 <= asteroid.get_position()[1] <= WINDOW_HEIGHT):
                 del self.asteroids[i]
             # столкновение астероида с главным героем
-            if abs(asteroid.get_position()[0] - self.hero.get_position()[0]) < asteroid.radius + self.hero.radius and abs(
+            if abs(asteroid.get_position()[0] - self.hero.get_position()[
+                0]) < asteroid.radius + self.hero.radius and abs(
                     asteroid.get_position()[1] - self.hero.get_position()[1]) < asteroid.radius + self.hero.radius:
                 # уничтожение астероида
                 del self.asteroids[i]
@@ -414,6 +420,8 @@ def main():
                 game.add_buff(buff)
 
             screen.fill((0, 0, 0))
+            # применение спрайтов
+            screen.blit(hero.render(screen)[0], hero.render(screen)[1])
             game.render(screen)
             clock.tick(FPS)
 
