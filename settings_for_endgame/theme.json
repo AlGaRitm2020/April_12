@@ -11,12 +11,6 @@
       "hovered_bg": "#000000",
       "normal_text": "#000000",
       "hovered_text": "#00fffc"
-    },
-    "font": {
-      "name": "arial",
-      "size": "12",
-      "bold": "1",
-      "italic": "0"
     }
   }
 }

@@ -110,7 +110,7 @@ class Enemy(pygame.sprite.Sprite):
         self.dy = 0
 
         # скорость врага
-        self.speed = self.type * 2
+        self.speed = self.type*2
 
         # счетчик времени для событий врага
         self.timer = 0
@@ -119,7 +119,7 @@ class Enemy(pygame.sprite.Sprite):
         self.kd_counter = 0
 
         # продолжительность перезарядки
-        self.reload = 60 - self.type * 10
+        self.reload = 60-self.type*10
 
         self.attack_duration = None
 
@@ -157,7 +157,7 @@ class Enemy(pygame.sprite.Sprite):
         else:
             size = (60, 70)
         global images_enemiesa
-        image_enemy = images_enemies[self.type - 1]
+        image_enemy = images_enemies[self.type-1]
 
         self.image = pygame.transform.scale(image_enemy, size)
         self.rect = self.image.get_rect(center=(self.x, self.y))
@@ -182,7 +182,7 @@ class Asteroid(pygame.sprite.Sprite):
         self.hp = self.type
 
         # радиус астероида
-        self.radius = self.type * 30
+        self.radius = self.type*30
 
     # получить координату
     def get_position(self):
@@ -196,7 +196,7 @@ class Asteroid(pygame.sprite.Sprite):
     def render(self, screen):
         global image_asteroid
         size = [(60, 60), (120, 120), (180, 180)]
-        self.image = pygame.transform.scale(image_asteroid, size[self.type - 1])
+        self.image = pygame.transform.scale(image_asteroid, size[self.type-1])
         self.rect = self.image.get_rect(center=(self.x, self.y))
         return (self.image, self.rect)
 
@@ -213,7 +213,7 @@ class Buff(pygame.sprite.Sprite):
             self.x, self.y = position[0]
         else:
             self.mode = "dinamic"
-            self.x = random.randint(10, WINDOW_WIDTH - 10)
+            self.x = random.randint(10, WINDOW_WIDTH-10)
             self.y = 0
 
         # радиус баффа
@@ -326,13 +326,13 @@ class Game:
             next_x += self.hero.speed
         if pygame.key.get_pressed()[pygame.K_w] and self.hero.get_position()[1] > 10:
             next_y -= self.hero.speed
-        if pygame.key.get_pressed()[pygame.K_s] and self.hero.get_position()[1] < WINDOW_HEIGHT - 10:
+        if pygame.key.get_pressed()[pygame.K_s] and self.hero.get_position()[1] < WINDOW_HEIGHT-10:
             next_y += self.hero.speed
 
         if pygame.key.get_pressed()[pygame.K_SPACE] or pygame.mouse.get_pressed() == (1, 0, 0):
             if self.hero.bullets_count < 320:
-                for i in range(1, self.hero.lvl + 1):
-                    self.bullets.append(Bullet((next_x + i * 10 - self.hero.lvl * 7, next_y), -1, self.hero.damage))
+                for i in range(1, self.hero.lvl+1):
+                    self.bullets.append(Bullet((next_x+i*10-self.hero.lvl*7, next_y), -1, self.hero.damage))
                 self.hero.bullets_count += 32
         if self.hero.bullets_count >= 0:
             self.hero.bullets_count -= 1
@@ -344,7 +344,7 @@ class Game:
     def move_bullets(self):
         # проход по всем действующим пулям
         for i, bullet in enumerate(self.bullets):
-            bullet.set_position((bullet.get_position()[0], bullet.get_position()[1] + bullet.direction * 4))
+            bullet.set_position((bullet.get_position()[0], bullet.get_position()[1]+bullet.direction*4))
             # выход пули за пределы экрана
             if bullet.get_position()[1] < 0 or bullet.get_position()[1] > WINDOW_HEIGHT:
                 if bullet.direction == -1:
@@ -355,8 +355,8 @@ class Game:
             if bullet.direction == -1:
                 # стрельба по врагам
                 for j, enemy in enumerate(self.enemies):
-                    if abs(enemy.get_position()[0] - bullet.get_position()[0]) < enemy.radius + bullet.radius and abs(
-                            enemy.get_position()[1] - bullet.get_position()[1]) < enemy.radius + bullet.radius:
+                    if abs(enemy.get_position()[0]-bullet.get_position()[0]) < enemy.radius+bullet.radius and abs(
+                            enemy.get_position()[1]-bullet.get_position()[1]) < enemy.radius+bullet.radius:
                         # уничтожение пули и нанесение урона врагу
                         del self.bullets[i]
                         enemy.hp -= self.hero.damage
@@ -378,9 +378,9 @@ class Game:
                         # self.hero.bullets_count -= 1
                 # стрельба по астероидам
                 for j, asteroid in enumerate(self.asteroids):
-                    if abs(asteroid.get_position()[0] - bullet.get_position()[
-                        0]) < asteroid.radius + bullet.radius and abs(
-                        asteroid.get_position()[1] - bullet.get_position()[1]) < asteroid.radius + bullet.radius:
+                    if abs(asteroid.get_position()[0]-bullet.get_position()[
+                        0]) < asteroid.radius+bullet.radius and abs(
+                        asteroid.get_position()[1]-bullet.get_position()[1]) < asteroid.radius+bullet.radius:
                         # уничтожение пули и нанесение урона астероиду
                         del self.bullets[i]
                         asteroid.hp -= self.hero.damage
@@ -392,24 +392,24 @@ class Game:
                             event = random.randint(0, 100000)
                             # малый астероид
                             if asteroid.type == 1:
-                                if event % 20 == 1:
+                                if event%20 == 1:
                                     buff = Buff("HP", asteroid.get_position())
                                     self.add_buff(buff)
                             # большой астероид
                             elif asteroid.type == 2:
-                                if event % 3 == 1:
+                                if event%3 == 1:
                                     buff = Buff("HP", asteroid.get_position())
                                     self.add_buff(buff)
-                                elif event % 10 == 1:
+                                elif event%10 == 1:
                                     buff = Buff("SPEED UP", asteroid.get_position())
                                     self.add_buff(buff)
 
                             # гигантский астероид
                             elif asteroid.type == 3:
-                                if event % 5 == 1:
+                                if event%5 == 1:
                                     buff = Buff("LVL UP", asteroid.get_position())
                                     self.add_buff(buff)
-                                elif event % 2 == 1:
+                                elif event%2 == 1:
                                     buff = Buff("SPEED UP", asteroid.get_position())
                                     self.add_buff(buff)
                                 else:
@@ -428,8 +428,8 @@ class Game:
 
             # вражеские пули
             else:
-                if abs(self.hero.get_position()[0] - bullet.get_position()[0]) < self.hero.radius + bullet.radius \
-                    and abs(self.hero.get_position()[1] - bullet.get_position()[1]) < self.hero.radius + bullet.radius:
+                if abs(self.hero.get_position()[0]-bullet.get_position()[0]) < self.hero.radius+bullet.radius \
+                        and abs(self.hero.get_position()[1]-bullet.get_position()[1]) < self.hero.radius+bullet.radius:
 
                     # уничтожение пули
                     self.hero.health -= bullet.damage
@@ -454,7 +454,7 @@ class Game:
             if enemy.timer == 0:
 
                 # применить ульту
-                if event % 150 == 1:
+                if event%150 == 1:
                     # обычный враг
                     if enemy.type != 4:
                         enemy.attack_duration = random.randint(100, 300)
@@ -463,22 +463,22 @@ class Game:
                     # босс
                     else:
                         # ульта 1 (гернерация врагов) без таймера
-                        if event % 1200 == 1:
+                        if event%1200 == 1:
                             # созадание врагов 3 класса
-                            boss_support_1 = Enemy((enemy.get_position()[0] + 10, enemy.get_position()[1]), 3)
-                            boss_support_2 = Enemy((enemy.get_position()[0] - 10, enemy.get_position()[1]), 3)
-                            boss_support_3 = Enemy((enemy.get_position()[0], enemy.get_position()[1] + 20), 3)
+                            boss_support_1 = Enemy((enemy.get_position()[0]+10, enemy.get_position()[1]), 3)
+                            boss_support_2 = Enemy((enemy.get_position()[0]-10, enemy.get_position()[1]), 3)
+                            boss_support_3 = Enemy((enemy.get_position()[0], enemy.get_position()[1]+20), 3)
                             self.add_enemy(boss_support_1, boss_support_2, boss_support_3)
 
                         # запуск ульты 2 (запрет на телепортацию)
-                        if event % 1500 == 1:
+                        if event%1500 == 1:
                             self.hero.locked_teleport = True
                             enemy.timer += 1
 
                 # состояние полной боеготовности
                 # удерживание постоянной дистанции до главного героя
-                if enemy.get_position()[0] > self.hero.get_position()[0] + enemy.distanse:
-                    enemy.dx = -1 * enemy.speed
+                if enemy.get_position()[0] > self.hero.get_position()[0]+enemy.distanse:
+                    enemy.dx = -1*enemy.speed
                 else:
                     enemy.dx = enemy.speed
 
@@ -490,9 +490,9 @@ class Game:
                     enemy.timer += 1
 
                     # половина атаки
-                    if enemy.timer == enemy.attack_duration // 2:
+                    if enemy.timer == enemy.attack_duration//2:
                         # возвращение на исходную позицию
-                        enemy.dy = -1 * enemy.speed
+                        enemy.dy = -1*enemy.speed
 
                     # прекращение атаки
                     if enemy.timer == enemy.attack_duration:
@@ -516,17 +516,17 @@ class Game:
                 # дополнительные выстрелы у босса
                 if enemy.type == 4:
                     self.bullets.append(
-                        Bullet((enemy.get_position()[0] - 10, enemy.get_position()[1] + 10), 1, enemy.damage))
+                        Bullet((enemy.get_position()[0]-10, enemy.get_position()[1]+10), 1, enemy.damage))
                     self.bullets.append(
-                        Bullet((enemy.get_position()[0] + 10, enemy.get_position()[1] + 10), 1, enemy.damage))
+                        Bullet((enemy.get_position()[0]+10, enemy.get_position()[1]+10), 1, enemy.damage))
                     self.bullets.append(
-                        Bullet((enemy.get_position()[0] - 20, enemy.get_position()[1] + 20), 1, enemy.damage))
+                        Bullet((enemy.get_position()[0]-20, enemy.get_position()[1]+20), 1, enemy.damage))
                     self.bullets.append(
-                        Bullet((enemy.get_position()[0] + 20, enemy.get_position()[1] + 20), 1, enemy.damage))
+                        Bullet((enemy.get_position()[0]+20, enemy.get_position()[1]+20), 1, enemy.damage))
 
                 enemy.kd_counter = 0
             # движение врага
-            enemy.set_position((enemy.get_position()[0] + enemy.dx, enemy.get_position()[1] + enemy.dy))
+            enemy.set_position((enemy.get_position()[0]+enemy.dx, enemy.get_position()[1]+enemy.dy))
 
             if not (0 <= enemy.get_position()[0] <= WINDOW_WIDTH):
                 enemy.dx *= -1
@@ -540,9 +540,9 @@ class Game:
                     0 <= asteroid.get_position()[1] <= WINDOW_HEIGHT):
                 del self.asteroids[i]
             # столкновение астероида с главным героем
-            if abs(asteroid.get_position()[0] - self.hero.get_position()[
-                0]) < asteroid.radius + self.hero.radius and abs(
-                asteroid.get_position()[1] - self.hero.get_position()[1]) < asteroid.radius + self.hero.radius:
+            if abs(asteroid.get_position()[0]-self.hero.get_position()[
+                0]) < asteroid.radius+self.hero.radius and abs(
+                asteroid.get_position()[1]-self.hero.get_position()[1]) < asteroid.radius+self.hero.radius:
                 # уничтожение астероида
                 del self.asteroids[i]
 
@@ -554,7 +554,7 @@ class Game:
 
             # движение астероида
             asteroid.set_position(
-                (asteroid.get_position()[0] + asteroid.dx, asteroid.get_position()[1] + asteroid.dy))
+                (asteroid.get_position()[0]+asteroid.dx, asteroid.get_position()[1]+asteroid.dy))
 
     # движение баффов
     def move_buffs(self):
@@ -563,8 +563,8 @@ class Game:
                 del self.buffs[i]
 
             # столкновение баффа с главным героем
-            if abs(buff.get_position()[0] - self.hero.get_position()[0]) < buff.radius + self.hero.radius and abs(
-                    buff.get_position()[1] - self.hero.get_position()[1]) < buff.radius + self.hero.radius:
+            if abs(buff.get_position()[0]-self.hero.get_position()[0]) < buff.radius+self.hero.radius and abs(
+                    buff.get_position()[1]-self.hero.get_position()[1]) < buff.radius+self.hero.radius:
 
                 # активация баффа
                 if buff.type == "HP":
@@ -582,7 +582,7 @@ class Game:
             # движение баффа
             if buff.mode == "dinamic":
                 buff.set_position(
-                    (buff.get_position()[0], buff.get_position()[1] + buff.speed))
+                    (buff.get_position()[0], buff.get_position()[1]+buff.speed))
 
     # добавить врага
     def add_enemy(self, *enemies):
@@ -601,27 +601,27 @@ class Game:
 
 def show_message(screen, message):
     font = pygame.font.Font(None, 50)
-    text = font.render(message, True, (255,20, 147))
-    text_x = WINDOW_WIDTH // 2 - text.get_width() // 2
-    text_y = WINDOW_HEIGHT // 2 - text.get_height() // 2
+    text = font.render(message, True, (255, 20, 147))
+    text_x = WINDOW_WIDTH//2-text.get_width()//2
+    text_y = WINDOW_HEIGHT//2-text.get_height()//2
     text_w = text.get_width()
     text_h = text.get_height()
-    pygame.draw.rect(screen, (30, 144, 255), (text_x - 10, text_y - 10, text_w + 20, text_h + 20))
+    pygame.draw.rect(screen, (30, 144, 255), (text_x-10, text_y-10, text_w+20, text_h+20))
     screen.blit(text, (text_x, text_y))
 
 
 def main():
     global image_player, images_enemies, image_asteroid, image_bullet, image_bullet_2, image_bg, image_buff
     pygame.init()
-    manager = pygame_gui.UIManager((800, 600),'settings_for_endgame/theme.json')
-    hello_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 75, 480), (150, 40)),
+    manager = pygame_gui.UIManager((800, 600), 'settings_for_endgame/theme.json')
+    hello_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((WINDOW_WIDTH//2-75, 480), (150, 40)),
                                                 text='Try again',
                                                 manager=manager)
     # скрыть кнопку
     hello_button.hide()
 
     clock = pygame.time.Clock()
-    time_delta = clock.tick(60) / 1000.0
+    time_delta = clock.tick(60)/1000.0
     screen = pygame.display.set_mode(WINDOW_SIZE)
     # ---------изображение объектов---------
     image_player = pygame.image.load('img/ship-min.png').convert_alpha()
@@ -641,7 +641,7 @@ def main():
     image_buff = pygame.image.load("img/buff.png").convert_alpha()
     # ----------
 
-    hero = Hero((WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
+    hero = Hero((WINDOW_SIZE[0]//2, WINDOW_SIZE[1]//2))
     bg = BG((0, 0))
     game = Game(hero, screen)
     # часы
@@ -649,14 +649,12 @@ def main():
     running = True
     # игровой цикл
     while running:
-
         for event in pygame.event.get():
             # закрытие окна
             if event.type == pygame.QUIT:
                 running = False
             if (event.type == pygame.USEREVENT and event.user_type == pygame_gui.UI_BUTTON_PRESSED and
                     event.ui_element == hello_button):
-
                 game.hero.health = 100
                 game.hero.score = 0
                 game.hero.lvl = 1
@@ -673,12 +671,10 @@ def main():
 
             manager.update(time_delta)
 
-
             manager.draw_ui(screen)
 
         # герой жив
         if game.hero.health > 99:
-
             # движение всех динамичных объектов
             game.move_bullets()
             game.move_hero()
@@ -705,13 +701,13 @@ def main():
 
                 game.add_enemy(enemy)
                 game.boss_status = 1
-            elif event % 100 == 1:
+            elif event%100 == 1:
                 # враг 2 класса
-                if event % 400 == 1:
+                if event%400 == 1:
                     enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 2)
 
                 # враг 3 класса
-                elif event % 1000 == 1:
+                elif event%1000 == 1:
                     enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 3)
 
                 # враг 1 класса
@@ -720,23 +716,36 @@ def main():
 
                 game.add_enemy(enemy)
             # создание астероида
-            if event % 100 == 2:
+            if event%100 == 2:
                 asteroid = Asteroid()
                 game.add_asteroid(asteroid)
-            if event % 3000 == 0:
+            if event%3000 == 0:
                 buff = Buff("HP")
                 game.add_buff(buff)
 
             screen.fill((0, 0, 0))
             # ---- СПРАЙТЫ----
+            # начальноне окно
 
             # применение спрайта фона
             screen.blit(bg.render(screen)[0], bg.render(screen)[1])
             # спрайт колво очков
-            game_font = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
-            score_surface = game_font.render(str(hero.score), True, (0, 255, 252))
-            score_rect = score_surface.get_rect(center=(WINDOW_WIDTH - 30, WINDOW_HEIGHT - 30))
+            game_font_score = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
+            score_surface = game_font_score.render(f'Score: {hero.score}', True, (0, 255, 252))
+            score_rect = score_surface.get_rect(center=(WINDOW_WIDTH-100, WINDOW_HEIGHT-40))
             screen.blit(score_surface, score_rect)
+            # спрайт здоровье
+            game_font_health = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
+            health_surface = game_font_health.render(str(hero.health), True, (0, 255, 0))
+            health_rect = health_surface.get_rect(center=(WINDOW_WIDTH-250, WINDOW_HEIGHT-40))
+            screen.blit(health_surface, health_rect)
+
+            image_heart = pygame.image.load('img/heart.png').convert_alpha()
+            heart_image = pygame.transform.scale(image_heart, (45, 45))
+            heart_rect = heart_image.get_rect(center=(WINDOW_WIDTH-310, WINDOW_HEIGHT-40))
+
+            screen.blit(heart_image, heart_rect)
+
             # применение спрайта для героя
             screen.blit(hero.render(screen)[0], hero.render(screen)[1])
             # применение спрайтов для врагов
@@ -747,6 +756,7 @@ def main():
             for bullet in game.bullets:
                 screen.blit(bullet.render(screen)[0], bullet.render(screen)[1])
                 screen.blit(bullet.render(screen)[0], bullet.render(screen)[1])
+            # спрайт для хилки
             for buff in game.buffs:
                 screen.blit(buff.render(screen)[0], buff.render(screen)[1])
                 screen.blit(buff.render(screen)[0], buff.render(screen)[1])
