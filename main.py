@@ -18,11 +18,17 @@ class Hero(pygame.sprite.Sprite):
         # здоровье главного героя
         self.health = 100
 
+        # скорость главного героя
+        self.speed = 10
+
         # количество пуль от игрока на экране
         self.bullets_count = 0
 
         # наносимый урон
         self.damage = 1
+
+        # уровень игрока
+        self.lvl = 10
 
         # радиус главного героя
         self.radius = 30
@@ -165,7 +171,7 @@ class Asteroid(pygame.sprite.Sprite):
         self.x = random.randint(0, WINDOW_WIDTH)
         self.y = 0
         # тип астероида: 1 - 70%, 2 - 25%, 3 - 5%
-        self.type = random.choice([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2,  2, 2, 2, 3])
+        self.type = random.choice([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3])
 
         # изменение координат за один цикл
         self.dx = random.randint(-10, 10)
@@ -175,7 +181,7 @@ class Asteroid(pygame.sprite.Sprite):
         self.hp = self.type
 
         # радиус астероида
-        self.radius = self.type * 15 + 45
+        self.radius = self.type * 30
 
     # получить координату
     def get_position(self):
@@ -188,20 +194,26 @@ class Asteroid(pygame.sprite.Sprite):
     # отрисовка
     def render(self, screen):
         global image_asteroid
-        size = [(60, 60), (90, 90), (120, 120)]
+        size = [(60, 60), (120, 120), (180, 180)]
         self.image = pygame.transform.scale(image_asteroid, size[self.type - 1])
         self.rect = self.image.get_rect(center=(self.x, self.y))
         return (self.image, self.rect)
 
 
-# класс пули
+# класс баффов
 class Buff(pygame.sprite.Sprite):
-    def __init__(self, type):
+    def __init__(self, type, *position):
+
         pygame.sprite.Sprite.__init__(self)
 
         # координаты баффа
-        self.x = random.randint(0, WINDOW_WIDTH)
-        self.y = 0
+        if position:
+            self.mode = "static"
+            self.x, self.y = position[0]
+        else:
+            self.mode = "dinamic"
+            self.x = random.randint(10, WINDOW_WIDTH - 10)
+            self.y = 0
 
         # радиус баффа
         self.radius = 15
@@ -308,17 +320,18 @@ class Game:
                 next_x = 0
 
         if pygame.key.get_pressed()[pygame.K_a]:
-            next_x -= 10
+            next_x -= self.hero.speed
         if pygame.key.get_pressed()[pygame.K_d]:
-            next_x += 10
+            next_x += self.hero.speed
         if pygame.key.get_pressed()[pygame.K_w] and self.hero.get_position()[1] > 10:
-            next_y -= 10
+            next_y -= self.hero.speed
         if pygame.key.get_pressed()[pygame.K_s] and self.hero.get_position()[1] < WINDOW_HEIGHT - 10:
-            next_y += 10
+            next_y += self.hero.speed
 
         if pygame.key.get_pressed()[pygame.K_SPACE] or pygame.mouse.get_pressed() == (1, 0, 0):
             if self.hero.bullets_count < 320:
-                self.bullets.append(Bullet((next_x, next_y), -1, self.hero.damage))
+                for i in range(1, self.hero.lvl + 1):
+                    self.bullets.append(Bullet((next_x + i * 10 - self.hero.lvl * 7, next_y), -1, self.hero.damage))
                 self.hero.bullets_count += 32
         if self.hero.bullets_count >= 0:
             self.hero.bullets_count -= 1
@@ -370,19 +383,50 @@ class Game:
 
                         # уничтожение астероида
                         if asteroid.hp == 0:
+
+                            # выпадение лута с астероидов
+                            event = random.randint(0, 100000)
+                            # малый астероид
+                            if asteroid.type == 1:
+                                if event % 20 == 1:
+                                    buff = Buff("HP", asteroid.get_position())
+                                    self.add_buff(buff)
+                            # большой астероид
+                            elif asteroid.type == 2:
+                                if event % 3 == 1:
+                                    buff = Buff("HP", asteroid.get_position())
+                                    self.add_buff(buff)
+                                elif event % 10 == 1:
+                                    buff = Buff("SPEED UP", asteroid.get_position())
+                                    self.add_buff(buff)
+
+                            # гигантский астероид
+                            elif asteroid.type == 3:
+                                if event % 5 == 1:
+                                    buff = Buff("LVL UP", asteroid.get_position())
+                                    self.add_buff(buff)
+                                elif event % 2 == 1:
+                                    buff = Buff("SPEED UP", asteroid.get_position())
+                                    self.add_buff(buff)
+                                else:
+                                    buff = Buff("HP", asteroid.get_position())
+                                    self.add_buff(buff)
+
+                            # уничтожить астероид
                             del self.asteroids[j]
-                            self.hero.score += 2
+                            self.hero.score += asteroid.type
 
                             # вывод показателя очков
                             print(f"SCORE: {self.hero.score}")
 
-                        # увеличение счетчика пуль главного героя
-                        self.hero.bullets_count -= 1
+                        # бонус за уничтожение( ускорение перезарядки)
+                        self.hero.bullets_count -= 32
+
             # вражеские пули
             else:
-                if abs(self.hero.get_position()[0] - bullet.get_position()[
-                    0]) < self.hero.radius + bullet.radius and abs(
-                    self.hero.get_position()[1] - bullet.get_position()[1]) < self.hero.radius + bullet.radius:
+                if abs(self.hero.get_position()[0] - bullet.get_position()[0]) < self.hero.radius + bullet.radius \
+                    and abs(self.hero.get_position()[1] - bullet.get_position()[1]) < self.hero.radius + bullet.radius:
+
                     # уничтожение пули
                     self.hero.health -= bullet.damage
 
@@ -521,13 +565,20 @@ class Game:
                 # активация баффа
                 if buff.type == "HP":
                     self.hero.health = 100
+                elif buff.type == "LVL UP":
+                    self.hero.lvl += 1
+                    print(f"LVL UP")
+                elif buff.type == "SPEED UP":
+                    self.hero.speed += 1
+                    print(f"SPEED UP")
 
                 # удалаение баффа
                 del self.buffs[i]
 
             # движение баффа
-            buff.set_position(
-                (buff.get_position()[0], buff.get_position()[1] + buff.speed))
+            if buff.mode == "dinamic":
+                buff.set_position(
+                    (buff.get_position()[0], buff.get_position()[1] + buff.speed))
 
     # добавить врага
     def add_enemy(self, *enemies):
@@ -562,12 +613,12 @@ def main():
     # ---------изображение объектов---------
     image_player = pygame.image.load('img/ship-min.png').convert_alpha()
 
-    # !! заменить два последних изображения врага на другие
+    # !! заменить три последних изображения врага на другие
     images_enemies = [
         pygame.image.load('img/shipB1.png').convert_alpha(),  # враг 1 класса(самый слабый)
         pygame.image.load('img/shipB1.png').convert_alpha(),  # враг 2 класса
         pygame.image.load('img/shipB1.png').convert_alpha(),  # враг 3 класса
-        pygame.image.load('img/shipB1.png').convert_alpha()  # враг 4 класса (БОСС, нужен спрайт побольше)
+        pygame.image.load('img/shipB1.png').convert_alpha()  # враг 4 класса (БОСС)
     ]
 
     image_asteroid = pygame.image.load('img/asteroid.png').convert_alpha()
@@ -638,7 +689,7 @@ def main():
             if event % 100 == 2:
                 asteroid = Asteroid()
                 game.add_asteroid(asteroid)
-            if event % 1000 == 0:
+            if event % 3000 == 0:
                 buff = Buff("HP")
                 game.add_buff(buff)
 
