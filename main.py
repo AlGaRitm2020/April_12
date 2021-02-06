@@ -599,26 +599,32 @@ class Game:
         self.buffs.append(buff)
 
 
-def show_message(screen, message):
-    font = pygame.font.Font(None, 50)
-    text = font.render(message, True, (255,20, 147))
-    text_x = WINDOW_WIDTH // 2 - text.get_width() // 2
-    text_y = WINDOW_HEIGHT // 2 - text.get_height() // 2
-    text_w = text.get_width()
-    text_h = text.get_height()
-    pygame.draw.rect(screen, (30, 144, 255), (text_x - 10, text_y - 10, text_w + 20, text_h + 20))
-    screen.blit(text, (text_x, text_y))
+# def show_message(screen, message):
+#     font = pygame.font.Font(None, 50)
+#     text = font.render(message, True, (255,20, 147))
+#     text_x = WINDOW_WIDTH // 2 - text.get_width() // 2
+#     text_y = WINDOW_HEIGHT // 2 - text.get_height() // 2
+#     text_w = text.get_width()
+#     text_h = text.get_height()
+#     pygame.draw.rect(screen, (30, 144, 255), (text_x - 10, text_y - 10, text_w + 20, text_h + 20))
+#     screen.blit(text, (text_x, text_y))
 
 
 def main():
     global image_player, images_enemies, image_asteroid, image_bullet, image_bullet_2, image_bg, image_buff
     pygame.init()
+    pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     manager = pygame_gui.UIManager((800, 600),'settings_for_endgame/theme.json')
-    hello_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 75, 480), (150, 40)),
+    try_again_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 75, 480), (150, 40)),
                                                 text='Try again',
                                                 manager=manager)
+
+    game_over_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 125, WINDOW_HEIGHT // 2 - 25), (250, 50)),
+                                                    text='GAME OVER',
+                                                    manager=manager)
+
     # скрыть кнопку
-    hello_button.hide()
+    try_again_button.hide()
 
     clock = pygame.time.Clock()
     time_delta = clock.tick(60) / 1000.0
@@ -655,7 +661,7 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             if (event.type == pygame.USEREVENT and event.user_type == pygame_gui.UI_BUTTON_PRESSED and
-                    event.ui_element == hello_button):
+                    event.ui_element == try_again_button):
 
                 game.hero.health = 100
                 game.hero.score = 0
@@ -667,7 +673,7 @@ def main():
                 game.bullets = []
                 game.asteroids = []
                 game.boss_status = 0
-                hello_button.hide()
+                try_again_button.hide()
 
             manager.process_events(event)
 
@@ -756,8 +762,8 @@ def main():
 
         # конец игры
         else:
-            show_message(screen, f"GAME OVER SCORE: {hero.score}")
-            hello_button.show()
+            # show_message(screen, f"GAME OVER SCORE: {hero.score}")
+            try_again_button.show()
         pygame.display.flip()
     pygame.quit()
 
