@@ -8,8 +8,8 @@
     },
     "colours": {
       "normal_bg": "#00fffc",
-      "hovered_bg": "#fff",
-      "normal_text": "#fff",
+      "hovered_bg": "#000000",
+      "normal_text": "#000000",
       "hovered_text": "#00fffc"
     },
     "font": {
