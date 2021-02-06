@@ -8,7 +8,6 @@ MAX_COUNT_OF_ENEMIES = 5
 ENEMY_EVENT_TYPE = 30
 
 
-
 # класс главного героя
 class Hero(pygame.sprite.Sprite):
     def __init__(self, position):
@@ -30,6 +29,9 @@ class Hero(pygame.sprite.Sprite):
 
         # заработанные очки
         self.score = 0
+
+        # блокировка телепорта боссом
+        self.locked_teleport = False
 
     # получить координату
     def get_position(self):
@@ -126,6 +128,12 @@ class Enemy(pygame.sprite.Sprite):
         # удерживаимая дистанция до главного героя по оси x
         self.distanse = random.randint(-150, 150)
 
+        # параметры босса
+        if self.type == 4:
+            self.hp = 100
+            self.speed = 1
+            self.distanse = 0
+
     # получить координату
     def get_position(self):
         return self.x, self.y
@@ -215,6 +223,7 @@ class Buff(pygame.sprite.Sprite):
             self.rect = self.image.get_rect(center=(self.x, self.y))
             return (self.image, self.rect)
 
+
 class BG(pygame.sprite.Sprite):
     def __init__(self, position):
         pygame.sprite.Sprite.__init__(self)
@@ -236,6 +245,7 @@ class BG(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         return (self.image, self.rect)
 
+
 # класс игры
 class Game:
     def __init__(self, hero, screen):
@@ -247,6 +257,9 @@ class Game:
         self.enemies = []
         self.asteroids = []
         self.buffs = []
+        # статус босса(неактивен, создан, побежден)
+        self.boss_status = 0
+
     # отрисовка всех динамичных объектов
     def render(self, screen):
         # отрисовка главного героя
@@ -272,10 +285,19 @@ class Game:
     def move_hero(self):
         # импорт текущих координат из класса hero
         next_x, next_y = self.hero.get_position()
+
+        # телепортация из левого края в правый
         if next_x < 0:
-            next_x = WINDOW_WIDTH
+            if self.hero.locked_teleport:
+                next_x = 0
+            else:
+                next_x = WINDOW_WIDTH
         if next_x > WINDOW_WIDTH:
-            next_x = 0
+            if self.hero.locked_teleport:
+                next_x = WINDOW_WIDTH
+            else:
+                next_x = 0
+
         if pygame.key.get_pressed()[pygame.K_a]:
             next_x -= 10
         if pygame.key.get_pressed()[pygame.K_d]:
@@ -284,15 +306,14 @@ class Game:
             next_y -= 10
         if pygame.key.get_pressed()[pygame.K_s] and self.hero.get_position()[1] < WINDOW_HEIGHT - 10:
             next_y += 10
-            # pygame.draw.circle(self.screen, pygame.Color("Green"), (100,100), 100)
-            # show_message(self.screen,"Good game")
-            # time.sleep(3)
+
         if pygame.key.get_pressed()[pygame.K_SPACE] or pygame.mouse.get_pressed() == (1, 0, 0):
             if self.hero.bullets_count < 320:
                 self.bullets.append(Bullet((next_x, next_y), -1, self.hero.damage))
                 self.hero.bullets_count += 32
         if self.hero.bullets_count >= 0:
             self.hero.bullets_count -= 1
+
         # изменить координаты
         self.hero.set_position((next_x, next_y))
 
@@ -319,6 +340,10 @@ class Game:
 
                         # уничтожение врага
                         if enemy.hp == 0:
+                            # уничтожение босса
+                            if enemy.type == 4:
+                                self.boss_status = 2
+
                             del self.enemies[j]
                             self.hero.score += enemy.type
                             # вывод показателя очков
@@ -371,11 +396,27 @@ class Game:
             # если атака не активирована
             if enemy.timer == 0:
 
-                # начать атаку
+                # применить ульту
                 if event % 150 == 1:
-                    enemy.attack_duration = random.randint(100, 300)
-                    enemy.dy = enemy.speed
-                    enemy.timer += 1
+                    # обычный враг
+                    if enemy.type != 4:
+                        enemy.attack_duration = random.randint(100, 300)
+                        enemy.dy = enemy.speed
+                        enemy.timer += 1
+                    # босс
+                    else:
+                        # ульта 1 (гернерация врагов) без таймера
+                        if event % 1200 == 1:
+                            # созадание врагов 3 класса
+                            boss_support_1 = Enemy((enemy.get_position()[0] + 10, enemy.get_position()[1]), 3)
+                            boss_support_2 = Enemy((enemy.get_position()[0] - 10, enemy.get_position()[1]), 3)
+                            boss_support_3 = Enemy((enemy.get_position()[0], enemy.get_position()[1] + 20) , 3)
+                            self.add_enemy(boss_support_1, boss_support_2, boss_support_3)
+
+                        # запуск ульты 2 (запрет на телепортацию)
+                        if event % 1500 == 1:
+                            self.hero.locked_teleport = True
+                            enemy.timer += 1
 
                 # состояние полной боеготовности
                 # удерживание постоянной дистанции до главного героя
@@ -384,34 +425,55 @@ class Game:
                 else:
                     enemy.dx = enemy.speed
 
-            # режим атаки
+            # ульта у врага
             else:
-                # счетчик времени на атаку
-                enemy.timer += 1
+                # ульта у обычного врага
+                if enemy.type != 4:
+                    # счетчик времени на атаку
+                    enemy.timer += 1
 
-                # половина атаки
-                if enemy.timer == enemy.attack_duration // 2:
-                    # возвращение на исходную позицию
-                    enemy.dy = -1 * enemy.speed
+                    # половина атаки
+                    if enemy.timer == enemy.attack_duration // 2:
+                        # возвращение на исходную позицию
+                        enemy.dy = -1 * enemy.speed
 
-                # прекращение атаки
-                if enemy.timer == enemy.attack_duration:
-                    enemy.timer = 0
-                    enemy.dy = 0
+                    # прекращение атаки
+                    if enemy.timer == enemy.attack_duration:
+                        enemy.timer = 0
+                        enemy.dy = 0
+                # 2 ульта у босса ( запрет на телепортацию)
+                else:
+                    # счетчик времени на атаку
+                    enemy.timer += 1
+
+                    # прекращение ульты
+                    if enemy.timer == 600:
+                        enemy.timer = 0
+                        self.hero.locked_teleport = False
+
 
             # увеличение счетчика стрельбы врага
             enemy.kd_counter += 1
             # выстрел врага
             if enemy.kd_counter == enemy.reload:
                 self.bullets.append(Bullet(enemy.get_position(), 1, enemy.damage))
+                # дополнительные выстрелы у босса
+                if enemy.type == 4:
+                    self.bullets.append(
+                        Bullet((enemy.get_position()[0] - 10, enemy.get_position()[1] + 10), 1, enemy.damage))
+                    self.bullets.append(
+                        Bullet((enemy.get_position()[0] + 10, enemy.get_position()[1] + 10), 1, enemy.damage))
+                    self.bullets.append(
+                        Bullet((enemy.get_position()[0] - 20, enemy.get_position()[1] + 20), 1, enemy.damage))
+                    self.bullets.append(
+                        Bullet((enemy.get_position()[0] + 20, enemy.get_position()[1] + 20), 1, enemy.damage))
+
                 enemy.kd_counter = 0
             # движение врага
             enemy.set_position((enemy.get_position()[0] + enemy.dx, enemy.get_position()[1] + enemy.dy))
 
             if not (0 <= enemy.get_position()[0] <= WINDOW_WIDTH):
                 enemy.dx *= -1
-
-
 
     # движение астероидов
     def move_asteroids(self):
@@ -460,9 +522,10 @@ class Game:
                 (buff.get_position()[0], buff.get_position()[1] + buff.speed))
 
     # добавить врага
-    def add_enemy(self, enemy):
-        if len(self.enemies) <= MAX_COUNT_OF_ENEMIES:
-            self.enemies.append(enemy)
+    def add_enemy(self, *enemies):
+        for enemy in enemies:
+            if len(self.enemies) <= MAX_COUNT_OF_ENEMIES:
+                self.enemies.append(enemy)
 
     # добавить астероид
     def add_asteroid(self, asteroid):
@@ -492,22 +555,22 @@ def main():
     image_player = pygame.image.load('img/ship-min.png').convert_alpha()
 
     # !! заменить два последних изображения врага на другие
-    images_enemies = [pygame.image.load('img/shipB1.png').convert_alpha(),
-                      pygame.image.load('img/shipB1.png').convert_alpha(),
-                      pygame.image.load('img/shipB1.png').convert_alpha()]
-
+    images_enemies = [
+        pygame.image.load('img/shipB1.png').convert_alpha(),  # враг 1 класса(самый слабый)
+        pygame.image.load('img/shipB1.png').convert_alpha(),  # враг 2 класса
+        pygame.image.load('img/shipB1.png').convert_alpha(),  # враг 3 класса
+        pygame.image.load('img/shipB1.png').convert_alpha()  # враг 4 класса (БОСС, нужен спрайт побольше)
+    ]
 
     image_asteroid = pygame.image.load('img/asteroid.png').convert_alpha()
     image_bullet = pygame.image.load('img/bullet_N.png').convert_alpha()
     image_bullet_2 = pygame.image.load('img/bullet_N2.png').convert_alpha()
     image_bg = pygame.image.load("img/bg-min.png").convert_alpha()
     image_buff = pygame.image.load("img/buff.png").convert_alpha()
-    #----------
-
-
+    # ----------
 
     hero = Hero((WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
-    bg = BG((0,0))
+    bg = BG((0, 0))
     game = Game(hero, screen)
 
     # часы
@@ -521,7 +584,7 @@ def main():
                 running = False
 
         # герой жив
-        if game.hero.health > 99:
+        if game.hero.health > 0:
 
             # движение всех динамичных объектов
             game.move_bullets()
@@ -529,17 +592,39 @@ def main():
             game.move_enemies()
             game.move_asteroids()
             game.move_buffs()
-            # генерация события например создание врага
-            event = random.randint(0, 100000)
+
+            if game.boss_status != 1:
+                # генерация события например создание врага
+                event = random.randint(0, 100000)
+            else:
+                event = 11
+
             # создание врага
-            if event % 100 == 1:
+            if hero.score >= 10 and game.boss_status == 0:
+                # удаление всех врагов, астероидов, пуль
+                game.enemies = []
+                game.buffs = []
+                game.bullets = []
+                game.asteroids = []
+
+                # босс
+                enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 4)
+
+                game.add_enemy(enemy)
+                game.boss_status = 1
+            elif event % 100 == 1:
                 # враг 2 класса
                 if event % 400 == 1:
                     enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 2)
+
+                # враг 3 класса
                 elif event % 1000 == 1:
                     enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 3)
+
+                # враг 1 класса
                 else:
                     enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 1)
+
                 game.add_enemy(enemy)
             # создание астероида
             if event % 100 == 2:
@@ -550,7 +635,7 @@ def main():
                 game.add_buff(buff)
 
             screen.fill((0, 0, 0))
-            #---- СПРАЙТЫ----
+            # ---- СПРАЙТЫ----
             screen.blit(bg.render(screen)[0], bg.render(screen)[1])
             # применение спрайта для героя
             screen.blit(hero.render(screen)[0], hero.render(screen)[1])
@@ -565,7 +650,7 @@ def main():
             for buff in game.buffs:
                 screen.blit(buff.render(screen)[0], buff.render(screen)[1])
                 screen.blit(buff.render(screen)[0], buff.render(screen)[1])
-            #--------
+            # --------
             game.render(screen)
             clock.tick(FPS)
 
