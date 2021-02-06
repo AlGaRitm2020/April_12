@@ -616,8 +616,10 @@ def main():
     manager = pygame_gui.UIManager((800, 600),'settings_for_endgame/theme.json')
     hello_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 75, 480), (150, 40)),
                                                 text='Try again',
-
                                                 manager=manager)
+    # скрыть кнопку
+    hello_button.hide()
+
     clock = pygame.time.Clock()
     time_delta = clock.tick(60) / 1000.0
     screen = pygame.display.set_mode(WINDOW_SIZE)
@@ -665,7 +667,8 @@ def main():
                 game.buffs = []
                 game.bullets = []
                 game.asteroids = []
-                # hello_button.hide()
+                game.boss_status = 0
+                hello_button.hide()
 
             manager.process_events(event)
 
@@ -748,6 +751,7 @@ def main():
         # конец игры
         else:
             show_message(screen, f"GAME OVER SCORE: {hero.score}")
+            hello_button.show()
         pygame.display.flip()
     pygame.quit()
 
