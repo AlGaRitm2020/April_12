@@ -28,7 +28,7 @@ class Hero(pygame.sprite.Sprite):
         self.damage = 1
 
         # уровень игрока
-        self.lvl = 10
+        self.lvl = 1
 
         # радиус главного героя
         self.radius = 30
@@ -365,6 +365,9 @@ class Game:
                             # уничтожение босса
                             if enemy.type == 4:
                                 self.boss_status = 2
+
+                                # дополнительные очки за уничтожение босса
+                                self.hero.score += 96
 
                             del self.enemies[j]
                             self.hero.score += enemy.type
