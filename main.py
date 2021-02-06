@@ -28,6 +28,9 @@ class Hero(pygame.sprite.Sprite):
         # радиус главного героя
         self.radius = 30
 
+        # заработанные очки
+        self.score = 0
+
     # получить координату
     def get_position(self):
         return self.x, self.y
@@ -84,8 +87,12 @@ class Bullet(pygame.sprite.Sprite):
 
 # класс врага
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, position):
+    def __init__(self, position, type):
         pygame.sprite.Sprite.__init__(self)
+
+        # класс врага(1, 2 или 3)
+        self.type = type
+
         # координаты врага
         self.x, self.y = position
 
@@ -93,7 +100,8 @@ class Enemy(pygame.sprite.Sprite):
         self.dx = 0
         self.dy = 0
 
-        self.speed = random.randint(1, 6)
+        # скорость врага
+        self.speed = self.type * 2
 
         # счетчик времени для событий врага
         self.timer = 0
@@ -102,7 +110,7 @@ class Enemy(pygame.sprite.Sprite):
         self.kd_counter = 0
 
         # продолжительность перезарядки
-        self.reload = random.randint(15, 45)
+        self.reload = 60 - self.type * 10
 
         self.attack_duration = None
 
@@ -110,7 +118,7 @@ class Enemy(pygame.sprite.Sprite):
         self.hp = 1
 
         # наносимый урон
-        self.damage = 1
+        self.damage = self.type
 
         # радиус врага
         self.radius = 25
@@ -128,7 +136,8 @@ class Enemy(pygame.sprite.Sprite):
 
     # отрисовка
     def render(self, screen):
-        global image_enemy
+        global images_enemiesa
+        image_enemy = images_enemies[self.type - 1]
         self.image = pygame.transform.scale(image_enemy, (60, 70))
         self.rect = self.image.get_rect(center=(self.x, self.y))
         return (self.image, self.rect)
@@ -147,7 +156,7 @@ class Asteroid(pygame.sprite.Sprite):
         self.dy = random.randint(1, 10)
 
         # здоровье астероида
-        self.hp = random.randint(1, 4)
+        self.hp = 2
 
         # радиус астероида
         self.radius = (self.hp + 2) * 5
@@ -308,9 +317,12 @@ class Game:
                         del self.bullets[i]
                         enemy.hp -= self.hero.damage
 
-                        # уничтожение астероида
+                        # уничтожение врага
                         if enemy.hp == 0:
                             del self.enemies[j]
+                            self.hero.score += enemy.type
+                            # вывод показателя очков
+                            print(f"SCORE: {self.hero.score}")
                         # увеличение счетчика пуль главного героя
                         # self.hero.bullets_count -= 1
                 # стрельба по астероидам
@@ -325,6 +337,11 @@ class Game:
                         # уничтожение астероида
                         if asteroid.hp == 0:
                             del self.asteroids[j]
+                            self.hero.score += 2
+
+                            # вывод показателя очков
+                            print(f"SCORE: {self.hero.score}")
+
                         # увеличение счетчика пуль главного героя
                         self.hero.bullets_count -= 1
             # вражеские пули
@@ -468,12 +485,18 @@ def show_message(screen, message):
 
 
 def main():
-    global image_player, image_enemy, image_asteroid, image_bullet, image_bullet_2, image_bg, image_buff
+    global image_player, images_enemies, image_asteroid, image_bullet, image_bullet_2, image_bg, image_buff
     pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
     # ---------изображение объектов---------
     image_player = pygame.image.load('img/ship-min.png').convert_alpha()
-    image_enemy = pygame.image.load('img/shipB1.png').convert_alpha()
+
+    # !! заменить два последних изображения врага на другие
+    images_enemies = [pygame.image.load('img/shipB1.png').convert_alpha(),
+                      pygame.image.load('img/shipB1.png').convert_alpha(),
+                      pygame.image.load('img/shipB1.png').convert_alpha()]
+
+
     image_asteroid = pygame.image.load('img/asteroid.png').convert_alpha()
     image_bullet = pygame.image.load('img/bullet_N.png').convert_alpha()
     image_bullet_2 = pygame.image.load('img/bullet_N2.png').convert_alpha()
@@ -481,13 +504,12 @@ def main():
     image_buff = pygame.image.load("img/buff.png").convert_alpha()
     #----------
 
-    # all_sprites = pygame.sprite.Group()
+
+
     hero = Hero((WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
     bg = BG((0,0))
     game = Game(hero, screen)
-    # all_sprites.add(labyrinth)
-    # all_sprites.add(hero)
-    # all_sprites.add(enemy)
+
     # часы
     clock = pygame.time.Clock()
     running = True
@@ -499,7 +521,7 @@ def main():
                 running = False
 
         # герой жив
-        if game.hero.health > 0:
+        if game.hero.health > 99:
 
             # движение всех динамичных объектов
             game.move_bullets()
@@ -511,7 +533,13 @@ def main():
             event = random.randint(0, 100000)
             # создание врага
             if event % 100 == 1:
-                enemy = Enemy((random.randint(0, 600), random.randint(0, 50)))
+                # враг 2 класса
+                if event % 400 == 1:
+                    enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 2)
+                elif event % 1000 == 1:
+                    enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 3)
+                else:
+                    enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 1)
                 game.add_enemy(enemy)
             # создание астероида
             if event % 100 == 2:
@@ -543,11 +571,7 @@ def main():
 
         # конец игры
         else:
-            show_message(screen, "GAME OVER")
-        # Обновление
-        # all_sprites.update()
-        # for sprite in all_sprites:
-        #     sprite.x -= 5
+            show_message(screen, f"GAME OVER SCORE: {hero.score}")
         pygame.display.flip()
     pygame.quit()
 
