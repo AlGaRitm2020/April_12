@@ -10,8 +10,10 @@
 
         },
       "colours":{
-        "normal_bg": "#25292e"
-
+        "normal_bg": "#1e90ff",
+        "hovered_bg":"#ff1493",
+        "normal_text":"#ff1493",
+        "hovered_text":"#1e90ff"
       }
     }
 }
