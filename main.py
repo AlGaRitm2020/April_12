@@ -123,7 +123,7 @@ class Enemy(pygame.sprite.Sprite):
         self.damage = self.type
 
         # радиус врага
-        self.radius = 25
+        self.radius = 35
 
         # удерживаимая дистанция до главного героя по оси x
         self.distanse = random.randint(-150, 150)
@@ -133,6 +133,7 @@ class Enemy(pygame.sprite.Sprite):
             self.hp = 100
             self.speed = 1
             self.distanse = 0
+            self.radius = 100
 
     # получить координату
     def get_position(self):
@@ -144,9 +145,14 @@ class Enemy(pygame.sprite.Sprite):
 
     # отрисовка
     def render(self, screen):
+        if self.type == 4:
+            size = (180, 210)
+        else:
+            size = (60, 70)
         global images_enemiesa
         image_enemy = images_enemies[self.type - 1]
-        self.image = pygame.transform.scale(image_enemy, (60, 70))
+
+        self.image = pygame.transform.scale(image_enemy, size)
         self.rect = self.image.get_rect(center=(self.x, self.y))
         return (self.image, self.rect)
 
@@ -158,16 +164,18 @@ class Asteroid(pygame.sprite.Sprite):
         # координаты астероида
         self.x = random.randint(0, WINDOW_WIDTH)
         self.y = 0
+        # тип астероида: 1 - 70%, 2 - 25%, 3 - 5%
+        self.type = random.choice([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2,  2, 2, 2, 3])
 
         # изменение координат за один цикл
         self.dx = random.randint(-10, 10)
         self.dy = random.randint(1, 10)
 
         # здоровье астероида
-        self.hp = 2
+        self.hp = self.type
 
         # радиус астероида
-        self.radius = (self.hp + 2) * 5
+        self.radius = self.type * 15 + 45
 
     # получить координату
     def get_position(self):
@@ -180,7 +188,8 @@ class Asteroid(pygame.sprite.Sprite):
     # отрисовка
     def render(self, screen):
         global image_asteroid
-        self.image = pygame.transform.scale(image_asteroid, (60, 70))
+        size = [(60, 60), (90, 90), (120, 120)]
+        self.image = pygame.transform.scale(image_asteroid, size[self.type - 1])
         self.rect = self.image.get_rect(center=(self.x, self.y))
         return (self.image, self.rect)
 
@@ -410,7 +419,7 @@ class Game:
                             # созадание врагов 3 класса
                             boss_support_1 = Enemy((enemy.get_position()[0] + 10, enemy.get_position()[1]), 3)
                             boss_support_2 = Enemy((enemy.get_position()[0] - 10, enemy.get_position()[1]), 3)
-                            boss_support_3 = Enemy((enemy.get_position()[0], enemy.get_position()[1] + 20) , 3)
+                            boss_support_3 = Enemy((enemy.get_position()[0], enemy.get_position()[1] + 20), 3)
                             self.add_enemy(boss_support_1, boss_support_2, boss_support_3)
 
                         # запуск ульты 2 (запрет на телепортацию)
@@ -450,7 +459,6 @@ class Game:
                     if enemy.timer == 600:
                         enemy.timer = 0
                         self.hero.locked_teleport = False
-
 
             # увеличение счетчика стрельбы врага
             enemy.kd_counter += 1
