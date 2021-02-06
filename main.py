@@ -644,7 +644,6 @@ def main():
     hero = Hero((WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
     bg = BG((0, 0))
     game = Game(hero, screen)
-
     # часы
     clock = pygame.time.Clock()
     running = True
@@ -730,7 +729,14 @@ def main():
 
             screen.fill((0, 0, 0))
             # ---- СПРАЙТЫ----
+
+            # применение спрайта фона
             screen.blit(bg.render(screen)[0], bg.render(screen)[1])
+            # спрайт колво очков
+            game_font = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
+            score_surface = game_font.render(str(hero.score), True, (0, 255, 252))
+            score_rect = score_surface.get_rect(center=(WINDOW_WIDTH - 30, WINDOW_HEIGHT - 30))
+            screen.blit(score_surface, score_rect)
             # применение спрайта для героя
             screen.blit(hero.render(screen)[0], hero.render(screen)[1])
             # применение спрайтов для врагов
