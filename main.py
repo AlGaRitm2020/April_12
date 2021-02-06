@@ -1,4 +1,5 @@
 import pygame
+import pygame_gui
 import random
 import time
 
@@ -98,7 +99,7 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self, position, type):
         pygame.sprite.Sprite.__init__(self)
 
-        # класс врага(1, 2 или 3)
+        # класс врага(1,2, 3 или 4)
         self.type = type
 
         # координаты врага
@@ -600,18 +601,25 @@ class Game:
 
 def show_message(screen, message):
     font = pygame.font.Font(None, 50)
-    text = font.render(message, True, (50, 70, 0))
+    text = font.render(message, True, (255,20, 147))
     text_x = WINDOW_WIDTH // 2 - text.get_width() // 2
     text_y = WINDOW_HEIGHT // 2 - text.get_height() // 2
     text_w = text.get_width()
     text_h = text.get_height()
-    pygame.draw.rect(screen, (200, 150, 50), (text_x - 10, text_y - 10, text_w + 20, text_h + 20))
+    pygame.draw.rect(screen, (30, 144, 255), (text_x - 10, text_y - 10, text_w + 20, text_h + 20))
     screen.blit(text, (text_x, text_y))
 
 
 def main():
     global image_player, images_enemies, image_asteroid, image_bullet, image_bullet_2, image_bg, image_buff
     pygame.init()
+    manager = pygame_gui.UIManager((800, 600),'settings_for_endgame/theme.json')
+    hello_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 75, 480), (150, 40)),
+                                                text='Try again',
+
+                                                manager=manager)
+    clock = pygame.time.Clock()
+    time_delta = clock.tick(60) / 1000.0
     screen = pygame.display.set_mode(WINDOW_SIZE)
     # ---------изображение объектов---------
     image_player = pygame.image.load('img/ship-min.png').convert_alpha()
@@ -619,9 +627,9 @@ def main():
     # !! заменить три последних изображения врага на другие
     images_enemies = [
         pygame.image.load('img/shipB1.png').convert_alpha(),  # враг 1 класса(самый слабый)
-        pygame.image.load('img/shipB1.png').convert_alpha(),  # враг 2 класса
-        pygame.image.load('img/shipB1.png').convert_alpha(),  # враг 3 класса
-        pygame.image.load('img/shipB1.png').convert_alpha()  # враг 4 класса (БОСС)
+        pygame.image.load('img/shipB2.png').convert_alpha(),  # враг 2 класса
+        pygame.image.load('img/shipB3.png').convert_alpha(),  # враг 3 класса
+        pygame.image.load('img/shipB4.png').convert_alpha()  # враг 4 класса (БОСС)
     ]
 
     image_asteroid = pygame.image.load('img/asteroid.png').convert_alpha()
@@ -640,13 +648,34 @@ def main():
     running = True
     # игровой цикл
     while running:
+
         for event in pygame.event.get():
             # закрытие окна
             if event.type == pygame.QUIT:
                 running = False
+            if (event.type == pygame.USEREVENT and event.user_type == pygame_gui.UI_BUTTON_PRESSED and
+                    event.ui_element == hello_button):
+
+                game.hero.health = 100
+                game.hero.score = 0
+                game.hero.lvl = 1
+                game.hero.speed = 10
+
+                game.enemies = []
+                game.buffs = []
+                game.bullets = []
+                game.asteroids = []
+                # hello_button.hide()
+
+            manager.process_events(event)
+
+            manager.update(time_delta)
+
+
+            manager.draw_ui(screen)
 
         # герой жив
-        if game.hero.health > 0:
+        if game.hero.health > 99:
 
             # движение всех динамичных объектов
             game.move_bullets()
