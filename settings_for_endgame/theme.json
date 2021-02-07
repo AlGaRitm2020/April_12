@@ -1,19 +1,16 @@
 {
-    "button":
-    {
-        "misc":
-        {
-            "shape": "rounded_rectangle",
-            "shape_corner_radius": "10",
-            "border_width": "1",
-            "shadow_width": "2"
-
-        },
-      "colours":{
-        "normal_bg": "#1e90ff",
-        "hovered_bg":"#ff1493",
-        "normal_text":"#ff1493",
-        "hovered_text":"#1e90ff"
-      }
+  "button": {
+    "misc": {
+      "shape": "rounded_rectangle",
+      "shape_corner_radius": "10",
+      "border_width": "1",
+      "shadow_width": "2"
+    },
+    "colours": {
+      "normal_bg": "#00fffc",
+      "hovered_bg": "#000000",
+      "normal_text": "#000000",
+      "hovered_text": "#00fffc"
     }
+  }
 }
