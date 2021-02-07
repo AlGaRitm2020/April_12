@@ -5,8 +5,9 @@ import time
 
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1000, 800
 FPS = 60
-MAX_COUNT_OF_ENEMIES = 5
-ENEMY_EVENT_TYPE = 30
+
+START_HEALTH = 30
+START_SPEED = 10
 
 
 # класс главного героя
@@ -16,8 +17,10 @@ class Hero(pygame.sprite.Sprite):
         # координаты главного героя
         self.x, self.y = position
 
+        # максимальное здоровье главного героя
+        self.max_health = 30
         # здоровье главного героя
-        self.health = 100
+        self.health = self.max_health
 
         # скорость главного героя
         self.speed = 10
@@ -35,7 +38,7 @@ class Hero(pygame.sprite.Sprite):
         self.radius = 20
 
         # заработанные очки
-        self.score = 0
+        self.score = 2000
 
         # блокировка телепорта боссом
         self.locked_teleport = False
@@ -168,21 +171,28 @@ class Enemy(pygame.sprite.Sprite):
 class SuperAsteroid(pygame.sprite.Sprite):
     def __init__(self, type, *position):
         pygame.sprite.Sprite.__init__(self)
+
+        # уровень астероида 5- изначальный, 1- почти уничтоженный
+        self.type = type
+
+        # радиус суперастероида
+        radius = [30, 50, 75, 110, 150]
+        self.radius = radius[self.type - 1]
+
         # координаты астероида
         if position:
             self.x, self.y = position[0]
         else:
             self.x = random.randint(0, WINDOW_WIDTH)
-            self.y = 0
+            self.y = self.radius + 10
 
-        # уровень астероида 5- изначальный, 1- почти уничтоженный
-        self.type = type
+
         # урон от столкновения
         self.damage = self.type
 
         # изменение координат за один цикл
-        self.dx = random.random() + 1.5
-        self.dy = random.random() + 1.5
+        self.dx = random.random() + 2.5
+        self.dy = random.random() + 2.5
 
         # здоровье астероида
         self.hp = 2 ** (self.type + 1)
@@ -202,10 +212,10 @@ class SuperAsteroid(pygame.sprite.Sprite):
     # отрисовка
     def render(self, screen):
 
-        global image_asteroid
+        global image_superasteroid
         size = [(84, 84), (120, 120), (170, 170), (240, 240), (340, 340)]
 
-        self.image = pygame.transform.scale(image_asteroid, size[self.type - 1])
+        self.image = pygame.transform.scale(image_superasteroid, size[self.type - 1])
         self.rect = self.image.get_rect(center=(self.x, self.y))
         return (self.image, self.rect)
 
@@ -326,9 +336,11 @@ class Game:
         self.asteroids = []
         self.superasteroids = []
         self.buffs = []
+
+        self.max_count_of_enemies = 5
+
         # статус босса(неактивен, создан, побежден)
         self.boss_status = 0
-
         # статус суперастероида (неактивен, создан, побежден)
         self.superasteroid_status = 0
 
@@ -488,51 +500,85 @@ class Game:
                         0]) < superasteroid.radius + bullet.radius and abs(
                         superasteroid.get_position()[1] - bullet.get_position()[
                             1]) < superasteroid.radius + bullet.radius:
-                        print("shot")
+
+                        # уничтожение пули и нанесение урона астероиду
                         try:
-                            # уничтожение пули и нанесение урона астероиду
                             del self.bullets[i]
-                        except:
+                        except Exception:
                             pass
                         superasteroid.hp -= self.hero.damage
-                        # уничтожение астероида
+
+                        # уничтожение cуперастероида
                         if superasteroid.hp == 0:
                             # выпадение лута с астероидов
                             event = random.randint(0, 100000)
-                            # малый астероид
+
+                            # 1 класс
                             if superasteroid.type == 1:
-                                if event % 20 == 1:
-                                    buff = Buff("HP", superasteroid.get_position())
-                                    self.add_buff(buff)
-                            # большой астероид
-                            elif superasteroid.type == 2:
-                                if event % 3 == 1:
-                                    buff = Buff("HP", superasteroid.get_position())
+                                if event % 80 == 1:
+                                    buff = Buff("LVL UP", superasteroid.get_position())
                                     self.add_buff(buff)
                                 elif event % 10 == 1:
                                     buff = Buff("SPEED UP", superasteroid.get_position())
                                     self.add_buff(buff)
-                            # гигантский астероид
+                                else:
+                                    buff = Buff("HP", superasteroid.get_position())
+                                    self.add_buff(buff)
+                            # 2 класс
+                            elif superasteroid.type == 2:
+                                if event % 40 == 1:
+                                    buff = Buff("LVL UP", superasteroid.get_position())
+                                    self.add_buff(buff)
+                                elif event % 5 == 1:
+                                    buff = Buff("SPEED UP", superasteroid.get_position())
+                                    self.add_buff(buff)
+                                else:
+                                    buff = Buff("HP", superasteroid.get_position())
+                                    self.add_buff(buff)
+                            # 3 класс
                             elif superasteroid.type == 3:
-                                if event % 5 == 1:
+                                if event % 4 == 1:
                                     buff = Buff("LVL UP", superasteroid.get_position())
                                     self.add_buff(buff)
                                 elif event % 2 == 1:
                                     buff = Buff("SPEED UP", superasteroid.get_position())
                                     self.add_buff(buff)
+                                else:
+                                    buff = Buff("HP", superasteroid.get_position())
+                                    self.add_buff(buff)
+                            # 4 класс
+                            elif superasteroid.type == 4:
+                                if event % 2 == 1:
+                                    buff = Buff("LVL UP", superasteroid.get_position())
+                                    self.add_buff(buff)
+                                elif event % 2 == 1:
+                                    buff = Buff("SPEED UP", superasteroid.get_position())
+                                    self.add_buff(buff)
+                                else:
+                                    buff = Buff("HP", superasteroid.get_position())
+                                    self.add_buff(buff)
+                            # 5 класс
+                            elif superasteroid.type == 5:
+                                buff = Buff("COMBO", superasteroid.get_position())
+                                self.add_buff(buff)
+
+                            # распад суперастероида на 2 меньшего класса
                             if superasteroid.type > 1:
                                 self.add_superasteroid(SuperAsteroid(superasteroid.type - 1, superasteroid.get_position()),
                                                         SuperAsteroid(superasteroid.type - 1, superasteroid.get_position()))
 
+                            # получение очков за уничтожение
                             self.hero.score += superasteroid.type * 8
+
                             # вывод показателя очков
                             print(f"SCORE: {self.hero.score}")
+                            # уничтожить суперастероид
                             del self.superasteroids[j]
+
+                            # конец режима суперастеродида
                             if not self.superasteroids:
                                 self.superasteroid_status = 2
 
-                        # # бонус за уничтожение( ускорение перезарядки)
-                        # self.hero.bullets_count -= 32
 
             # вражеские пули
             else:
@@ -669,9 +715,9 @@ class Game:
     def move_superasteroids(self):
         # просмотр каждого супреастероида по отдельности
         for i, superasteroid in enumerate(self.superasteroids):
-            if superasteroid.get_position()[0] > WINDOW_WIDTH or superasteroid.get_position()[0] < 0:
+            if superasteroid.get_position()[0] > WINDOW_WIDTH - superasteroid.radius or superasteroid.get_position()[0] < superasteroid.radius:
                 superasteroid.dx *= -1
-            if superasteroid.get_position()[1] > WINDOW_HEIGHT or superasteroid.get_position()[1] < 0:
+            if superasteroid.get_position()[1] > WINDOW_HEIGHT - superasteroid.radius or superasteroid.get_position()[1] < superasteroid.radius:
                 superasteroid.dy *= -1
 
             for superasteroid_2 in self.superasteroids:
@@ -725,15 +771,20 @@ class Game:
                     buff.get_position()[1] - self.hero.get_position()[1]) < buff.radius + self.hero.radius:
 
                 # активация баффа
+                # восстановление здоровья
                 if buff.type == "HP":
-                    self.hero.health = 100
+                    self.hero.health = self.hero.max_health
+                # увеличение уровня( кол-во пуль, скорость стрельбы)
                 elif buff.type == "LVL UP":
                     self.hero.lvl += 1
                     print(f"LVL UP")
                 elif buff.type == "SPEED UP":
                     self.hero.speed += 1
                     print(f"SPEED UP")
-
+                elif buff.type == "COMBO":
+                    self.hero.health = self.hero.max_health
+                    self.hero.lvl += 1
+                    self.hero.speed += 1
                 # удалаение баффа
                 del self.buffs[i]
 
@@ -744,8 +795,9 @@ class Game:
 
     # добавить врага
     def add_enemy(self, *enemies):
+        self.max_count_of_enemies = 5 + self.hero.score // 100
         for enemy in enemies:
-            if len(self.enemies) <= MAX_COUNT_OF_ENEMIES:
+            if len(self.enemies) <= self.max_count_of_enemies:
                 self.enemies.append(enemy)
 
     # добавить суперастероид
@@ -774,7 +826,7 @@ def show_message(screen, message):
 
 
 def main():
-    global image_player, images_enemies, image_asteroid, image_bullet, image_bullet_2, image_bg, image_buff
+    global image_player, images_enemies, image_asteroid, image_bullet, image_bullet_2, image_bg, image_buff, image_superasteroid
     pygame.init()
     manager = pygame_gui.UIManager((800, 600), 'settings_for_endgame/theme.json')
     hello_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 75, 480), (150, 40)),
@@ -798,6 +850,7 @@ def main():
     ]
 
     image_asteroid = pygame.image.load('img/asteroid.png').convert_alpha()
+    image_superasteroid = pygame.image.load('img/superasteroid.png').convert_alpha()
     image_bullet = pygame.image.load('img/bullet_N.png').convert_alpha()
     image_bullet_2 = pygame.image.load('img/bullet_N2.png').convert_alpha()
     image_bg = pygame.image.load("img/bg-min.png").convert_alpha()
@@ -810,34 +863,48 @@ def main():
     # часы
     clock = pygame.time.Clock()
     running = True
+    gameover = False
+    win = False
     # игровой цикл
     while running:
         for event in pygame.event.get():
             # закрытие окна
             if event.type == pygame.QUIT:
                 running = False
+            # нажатие на кнопку try again
             if (event.type == pygame.USEREVENT and event.user_type == pygame_gui.UI_BUTTON_PRESSED and
                     event.ui_element == hello_button):
-                game.hero.health = 100
+
+                # переменные окончания игры
+                gameover = False
+                win = False
+
+                # дефолтные параметры игрока
+                game.hero.health = START_HEALTH
                 game.hero.score = 0
                 game.hero.lvl = 1
-                game.hero.speed = 10
+                game.hero.speed = START_SPEED
 
+                # удаление всех объектов
                 game.enemies = []
                 game.buffs = []
                 game.bullets = []
                 game.asteroids = []
+                game.superasteroids = []
                 game.boss_status = 0
+                game.superasteroid_status = 0
                 hello_button.hide()
 
+            # менеджер pygame_gui (для интерфейса)
             manager.process_events(event)
-
             manager.update(time_delta)
-
             manager.draw_ui(screen)
 
         # герой жив
-        if game.hero.health > 0:
+
+        if not gameover:
+            if game.hero.health <= 0:
+                gameover = True
             # движение всех динамичных объектов
             game.move_bullets()
             game.move_hero()
@@ -846,52 +913,74 @@ def main():
             game.move_buffs()
             game.move_superasteroids()
 
+            # боссы неактивны
             if game.boss_status != 1 and game.superasteroid_status != 1:
                 # генерация события например создание врага
                 event = random.randint(0, 100000)
+                enemies_generation_time = 101 - (hero.score // 20)
             else:
+                # задание неизменяемого события, которое ничего не делает
                 event = 11
 
-            # создание врага
-            if hero.score >= 1000 and game.boss_status == 0 and game.superasteroid_status != 1:
+            # создание босса
+            if hero.score >= 300 and game.boss_status == 0 and game.superasteroid_status != 1:
                 # удаление всех врагов, астероидов, пуль
                 game.enemies = []
                 game.buffs = []
                 game.bullets = []
                 game.asteroids = []
 
-                # босс
+
+                # добавить босса
                 enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 4)
-
                 game.add_enemy(enemy)
+                # включить режим босса
                 game.boss_status = 1
-            elif hero.score > 0 and game.superasteroid_status == 0:
+
+            # создание суперастероида
+            elif hero.score > 1000 and game.superasteroid_status == 0:
                 # удаление всех врагов, астероидов, пуль
                 game.enemies = []
                 game.buffs = []
                 game.bullets = []
                 game.asteroids = []
 
-                # суперастероид основатель( 5 класс)
+                # добавить суперастероид основатель( 5 класс)
                 superasteroid = SuperAsteroid(5)
-
                 game.add_superasteroid(superasteroid)
-
+                # включить режим суперастероида
                 game.superasteroid_status = 1
 
-            elif event % 100 == 1:
+            elif hero.score >= 2000:
+                gameover = True
+                win = True
+
+
+            # создание врага 1, 2, 3 класса
+            elif event % enemies_generation_time == 1:
+                # соотношение классов врагов
+                ratio_of_enemies = [enemies_generation_time * 10 - (hero.score // 50) * enemies_generation_time, enemies_generation_time * 4 - (hero.score // 50) * enemies_generation_time]
+
+                # задание минимального значения
+                if ratio_of_enemies[0] < enemies_generation_time:
+                    ratio_of_enemies[0] = enemies_generation_time
+                if ratio_of_enemies[1] < enemies_generation_time:
+                    ratio_of_enemies[1] = enemies_generation_time
+
                 # враг 2 класса
-                if event % 400 == 1:
-                    enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 2)
+                if event % ratio_of_enemies[0] == 1:
+                    print(ratio_of_enemies)
+                    enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 3)
 
                 # враг 3 класса
-                elif event % 1000 == 1:
-                    enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 3)
+                elif event % ratio_of_enemies[1] == 1:
+                    enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 2)
 
                 # враг 1 класса
                 else:
                     enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 1)
 
+                # добавить врага
                 game.add_enemy(enemy)
             # создание астероида
             if event % 100 == 2:
@@ -946,7 +1035,10 @@ def main():
 
         # конец игры
         else:
-            show_message(screen, f"GAME OVER SCORE: {hero.score}")
+            if win:
+                show_message(screen, "YOU WIN!")
+            else:
+                show_message(screen, f"GAME OVER")
             hello_button.show()
         pygame.display.flip()
     pygame.quit()
