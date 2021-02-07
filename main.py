@@ -32,13 +32,13 @@ class Hero(pygame.sprite.Sprite):
         self.damage = 1
 
         # уровень игрока
-        self.lvl = 3
+        self.lvl = 1
 
         # радиус главного героя
         self.radius = 20
 
         # заработанные очки
-        self.score = 2000
+        self.score = 0
 
         # блокировка телепорта боссом
         self.locked_teleport = False
@@ -720,6 +720,7 @@ class Game:
             if superasteroid.get_position()[1] > WINDOW_HEIGHT - superasteroid.radius or superasteroid.get_position()[1] < superasteroid.radius:
                 superasteroid.dy *= -1
 
+            # просмотр других суперастероидов
             for superasteroid_2 in self.superasteroids:
                 if superasteroid != superasteroid_2:
                     # столкновение двух суперастероидов
@@ -728,6 +729,7 @@ class Game:
                         superasteroid.get_position()[1] - superasteroid_2.get_position()[
                         1]) < superasteroid.radius + superasteroid_2.radius:
 
+                        # отталкивание суперастероидов друг от друга по оси х
                         if superasteroid.get_position()[0] > superasteroid_2.get_position()[0]:
                             superasteroid.dx = abs(superasteroid.dx)
                             superasteroid_2.dx = -abs(superasteroid_2.dx)
@@ -735,6 +737,7 @@ class Game:
                             superasteroid.dx = -abs(superasteroid.dx)
                             superasteroid_2.dx = abs(superasteroid_2.dx)
 
+                        # отталкивание суперастероидов друг от друга по оси у
                         if superasteroid.get_position()[1] > superasteroid_2.get_position()[1]:
                             superasteroid.dx = abs(superasteroid.dx)
                             superasteroid_2.dx = -abs(superasteroid_2.dx)
@@ -742,19 +745,17 @@ class Game:
                             superasteroid.dx = -abs(superasteroid.dx)
                             superasteroid_2.dx = abs(superasteroid_2.dx)
 
-                        # superasteroid_2.dx *= -1
-                        # superasteroid_2.dy *= -1
-                        # superasteroid.dx *= -1
-                        # superasteroid.dy *= -1
             # столкновение астероида с главным героем
             if abs(superasteroid.get_position()[0] - self.hero.get_position()[
                 0]) < superasteroid.radius + self.hero.radius and abs(
                 superasteroid.get_position()[1] - self.hero.get_position()[
                     1]) < superasteroid.radius + self.hero.radius:
-                # нанесение урона главному героюda
+                # нанесение урона главному герою
                 self.hero.health -= superasteroid.damage
+
                 # вывод показателя здоровья главного героя в консоль
                 print(f"HEALTH: {self.hero.health}")
+
             # движение астероида
             superasteroid.set_position(
                 (superasteroid.get_position()[0] + superasteroid.dx,
@@ -762,7 +763,10 @@ class Game:
 
     # движение баффов
     def move_buffs(self):
+        # просмотр каждого баффа в отдельности
         for i, buff in enumerate(self.buffs):
+
+            # удаление в случае выхода за пределы экрана
             if not (0 <= buff.get_position()[1] <= WINDOW_HEIGHT):
                 del self.buffs[i]
 
@@ -773,18 +777,29 @@ class Game:
                 # активация баффа
                 # восстановление здоровья
                 if buff.type == "HP":
-                    self.hero.health = self.hero.max_health
+                    # шанс на увеличение максимального кол-ва здоровья
+                    event = random.randint(1, 5)
+                    if event == 4:
+                        self.hero.max_health += 1
+                    self.hero.health += 5
+
                 # увеличение уровня( кол-во пуль, скорость стрельбы)
                 elif buff.type == "LVL UP":
                     self.hero.lvl += 1
                     print(f"LVL UP")
+
+                # увеличение скорости передвижения
                 elif buff.type == "SPEED UP":
                     self.hero.speed += 1
                     print(f"SPEED UP")
+
+                # комбо-бафф
                 elif buff.type == "COMBO":
+                    self.hero.max_health += 1
                     self.hero.health = self.hero.max_health
                     self.hero.lvl += 1
                     self.hero.speed += 1
+
                 # удалаение баффа
                 del self.buffs[i]
 
@@ -795,14 +810,20 @@ class Game:
 
     # добавить врага
     def add_enemy(self, *enemies):
+        # максимальное количество врагов на экране( увеличивается с возрастанием очков)
         self.max_count_of_enemies = 5 + self.hero.score // 100
+        # добавление врагов
         for enemy in enemies:
+            # проверка на превышение макс кол-ва
             if len(self.enemies) <= self.max_count_of_enemies:
+                # добавить врага
                 self.enemies.append(enemy)
 
     # добавить суперастероид
     def add_superasteroid(self, *superasteroids):
+        # цикл по всем переданным суперастероидам
         for superasteroid in superasteroids:
+            # добавить суперастероид
             self.superasteroids.append(superasteroid)
 
     # добавить астероид
@@ -813,7 +834,7 @@ class Game:
     def add_buff(self, buff):
         self.buffs.append(buff)
 
-
+# показать сообщение
 def show_message(screen, message):
     font = pygame.font.Font(None, 50)
     text = font.render(message, True, (255, 20, 147))
@@ -826,29 +847,44 @@ def show_message(screen, message):
 
 
 def main():
+    # переменные изображения спрайтов
     global image_player, images_enemies, image_asteroid, image_bullet, image_bullet_2, image_bg, image_buff, image_superasteroid
+
+    # инитилизация PyGame
     pygame.init()
+    pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+
+    # создание менеджера для элементов интерфейса
     manager = pygame_gui.UIManager((800, 600), 'settings_for_endgame/theme.json')
-    hello_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 75, 480), (150, 40)),
+
+    # создание кнопки начать игру заново
+    try_again_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 75, 480), (150, 40)),
                                                 text='Try again',
                                                 manager=manager)
-    # скрыть кнопку
-    hello_button.hide()
+    # создание надписи в конце игры "GAME OVER" или "YOU WIN!"
+    end_game_label = pygame_gui.elements.UILabel(
+        relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 125, WINDOW_HEIGHT // 2 - 25), (250, 50)),
+        text='',
+        manager=manager)
 
+    # скрыть кнопку
+    try_again_button.hide()
+
+    # часы для менеджера интерфейса
     clock = pygame.time.Clock()
     time_delta = clock.tick(60) / 1000.0
+
+    # создание холста
     screen = pygame.display.set_mode(WINDOW_SIZE)
+
     # ---------изображение объектов---------
     image_player = pygame.image.load('img/ship-min.png').convert_alpha()
-
-    # !! заменить три последних изображения врага на другие
     images_enemies = [
         pygame.image.load('img/shipB1.png').convert_alpha(),  # враг 1 класса(самый слабый)
         pygame.image.load('img/shipB2.png').convert_alpha(),  # враг 2 класса
         pygame.image.load('img/shipB3.png').convert_alpha(),  # враг 3 класса
         pygame.image.load('img/shipB4.png').convert_alpha()  # враг 4 класса (БОСС)
     ]
-
     image_asteroid = pygame.image.load('img/asteroid.png').convert_alpha()
     image_superasteroid = pygame.image.load('img/superasteroid.png').convert_alpha()
     image_bullet = pygame.image.load('img/bullet_N.png').convert_alpha()
@@ -857,23 +893,35 @@ def main():
     image_buff = pygame.image.load("img/buff.png").convert_alpha()
     # ----------
 
+    # создание главного героя
     hero = Hero((WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
+
+    # создание фона
     bg = BG((0, 0))
+
+    # создание игры
     game = Game(hero, screen)
-    # часы
+
+    # часы для игры
     clock = pygame.time.Clock()
+
+    # включить игровой цикл
     running = True
+
+    # переменные завершения игры
     gameover = False
     win = False
+
     # игровой цикл
     while running:
+        # обработка событий
         for event in pygame.event.get():
             # закрытие окна
             if event.type == pygame.QUIT:
                 running = False
             # нажатие на кнопку try again
             if (event.type == pygame.USEREVENT and event.user_type == pygame_gui.UI_BUTTON_PRESSED and
-                    event.ui_element == hello_button):
+                    event.ui_element == try_again_button):
 
                 # переменные окончания игры
                 gameover = False
@@ -893,7 +941,7 @@ def main():
                 game.superasteroids = []
                 game.boss_status = 0
                 game.superasteroid_status = 0
-                hello_button.hide()
+                try_again_button.hide()
 
             # менеджер pygame_gui (для интерфейса)
             manager.process_events(event)
@@ -901,10 +949,10 @@ def main():
             manager.draw_ui(screen)
 
         # герой жив
-
         if not gameover:
             if game.hero.health <= 0:
                 gameover = True
+
             # движение всех динамичных объектов
             game.move_bullets()
             game.move_hero()
@@ -929,7 +977,6 @@ def main():
                 game.buffs = []
                 game.bullets = []
                 game.asteroids = []
-
 
                 # добавить босса
                 enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 4)
@@ -996,11 +1043,13 @@ def main():
 
             # применение спрайта фона
             screen.blit(bg.render(screen)[0], bg.render(screen)[1])
+
             # спрайт колво очков
             game_font_score = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
             score_surface = game_font_score.render(f'Score: {hero.score}', True, (0, 255, 252))
             score_rect = score_surface.get_rect(center=(WINDOW_WIDTH - 100, WINDOW_HEIGHT - 40))
             screen.blit(score_surface, score_rect)
+
             # спрайт здоровье
             game_font_health = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
             health_surface = game_font_health.render(str(hero.health), True, (0, 255, 0))
@@ -1015,31 +1064,48 @@ def main():
 
             # применение спрайта для героя
             screen.blit(hero.render(screen)[0], hero.render(screen)[1])
+
             # применение спрайтов для врагов
             for enemy in game.enemies:
                 screen.blit(enemy.render(screen)[0], enemy.render(screen)[1])
+
+            # применение спрайтов для астероидов
             for asteroid in game.asteroids:
                 screen.blit(asteroid.render(screen)[0], asteroid.render(screen)[1])
+
+            # применение спрайтов для суперастероидов
             for superasteroid in game.superasteroids:
                 screen.blit(superasteroid.render(screen)[0], superasteroid.render(screen)[1])
+
+            # применение спрайтов для пуль
             for bullet in game.bullets:
                 screen.blit(bullet.render(screen)[0], bullet.render(screen)[1])
                 screen.blit(bullet.render(screen)[0], bullet.render(screen)[1])
-            # спрайт для хилки
+
+            # # применение спрайтов для баффов
             for buff in game.buffs:
                 screen.blit(buff.render(screen)[0], buff.render(screen)[1])
                 screen.blit(buff.render(screen)[0], buff.render(screen)[1])
             # --------
+
+            # прорисовать все объекты
             game.render(screen)
             clock.tick(FPS)
 
         # конец игры
         else:
+            # проверка на победу
             if win:
-                show_message(screen, "YOU WIN!")
+                end_game_label.set_text("YOU WIN!")
             else:
-                show_message(screen, f"GAME OVER")
-            hello_button.show()
+                end_game_label.set_text("GAME OVER")
+
+            # показать кнопку попробовать еще
+            try_again_button.show()
+
+            # показать надпись
+            end_game_label.show()
+
         pygame.display.flip()
     pygame.quit()
 
