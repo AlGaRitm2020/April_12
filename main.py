@@ -133,14 +133,14 @@ class Enemy(pygame.sprite.Sprite):
         self.damage = self.type
 
         # радиус врага
-        self.radius = 35
+        self.radius = 55
 
         # удерживаимая дистанция до главного героя по оси x
         self.distanse = random.randint(-150, 150)
 
         # параметры босса
         if self.type == 4:
-            self.hp = 100
+            self.hp = 120
             self.speed = 1
             self.distanse = 0
             self.radius = 100
@@ -156,9 +156,9 @@ class Enemy(pygame.sprite.Sprite):
     # отрисовка
     def render(self, screen):
         if self.type == 4:
-            size = (180, 210)
+            size = (240, 210)
         else:
-            size = (60, 70)
+            size = (110, 70)
         global images_enemiesa
         image_enemy = images_enemies[self.type - 1]
 
