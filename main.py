@@ -32,7 +32,7 @@ class Hero(pygame.sprite.Sprite):
         self.damage = 1
 
         # уровень игрока
-        self.lvl = 1
+        self.lvl = 10
 
         # радиус главного героя
         self.radius = 20
@@ -932,6 +932,7 @@ def main():
                 game.hero.score = 0
                 game.hero.lvl = 1
                 game.hero.speed = START_SPEED
+                game.hero.fps = fps
 
                 # удаление всех объектов
                 game.enemies = []
@@ -1043,6 +1044,17 @@ def main():
 
             # применение спрайта фона
             screen.blit(bg.render(screen)[0], bg.render(screen)[1])
+            # спрайт lvl
+            game_font_lvl = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
+            lvl_surface = game_font_lvl.render(f'lvl: {hero.lvl}', True, (255, 20, 147))
+            lvl_rect = lvl_surface.get_rect(center=(WINDOW_WIDTH - 440, WINDOW_HEIGHT - 40))
+            screen.blit(lvl_surface, lvl_rect)
+
+            # спрайт fps
+            game_font_fps = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
+            fps_surface = game_font_fps.render(f'FPS: {int(clock.get_fps())}', True, (0, 255, 252))
+            fps_rect = fps_surface.get_rect(center=(70, 40))
+            screen.blit(fps_surface, fps_rect)
 
             # спрайт колво очков
             game_font_score = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
