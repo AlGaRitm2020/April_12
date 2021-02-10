@@ -38,7 +38,7 @@ class Hero(pygame.sprite.Sprite):
         self.radius = 20
 
         # заработанные очки
-        self.score = 0
+        self.score = 1200
 
         # блокировка телепорта боссом
         self.locked_teleport = False
@@ -158,7 +158,7 @@ class Enemy(pygame.sprite.Sprite):
         if self.type == 4:
             size = (180, 210)
         else:
-            size = (60, 70)
+            size = (120, 70)
         global images_enemiesa
         image_enemy = images_enemies[self.type - 1]
 
@@ -986,7 +986,7 @@ def main():
                 game.boss_status = 1
 
             # создание суперастероида
-            elif hero.score > 1000 and game.superasteroid_status == 0:
+            elif hero.score > 10000 and game.superasteroid_status == 0:
                 # удаление всех врагов, астероидов, пуль
                 game.enemies = []
                 game.buffs = []
@@ -1044,6 +1044,14 @@ def main():
 
             # применение спрайта фона
             screen.blit(bg.render(screen)[0], bg.render(screen)[1])
+
+            if game.boss_status == 1:
+                # спрайт lvl
+                game_font_boss_health = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
+                boss_health_surface = game_font_boss_health.render(f'Boss HP: {game.enemies[0].hp}', True, (0, 255, 252))
+                boss_health_rect = boss_health_surface.get_rect(center=(WINDOW_WIDTH - 640, WINDOW_HEIGHT - 40))
+                screen.blit(boss_health_surface, boss_health_rect)
+
             # спрайт lvl
             game_font_lvl = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
             lvl_surface = game_font_lvl.render(f'lvl: {hero.lvl}', True, (255, 20, 147))
