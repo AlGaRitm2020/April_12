@@ -6,7 +6,7 @@ import time
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1000, 800
 FPS = 60
 
-START_HEALTH = 30
+START_HEALTH = 1
 START_SPEED = 10
 
 
@@ -32,13 +32,13 @@ class Hero(pygame.sprite.Sprite):
         self.damage = 1
 
         # уровень игрока
-        self.lvl = 10
+        self.lvl = 1
 
         # радиус главного героя
         self.radius = 20
 
         # заработанные очки
-        self.score = 1200
+        self.score = 0
 
         # блокировка телепорта боссом
         self.locked_teleport = False
@@ -412,7 +412,7 @@ class Game:
     def move_bullets(self):
         # проход по всем действующим пулям
         for i, bullet in enumerate(self.bullets):
-            bullet.set_position((bullet.get_position()[0], bullet.get_position()[1] + bullet.direction * 4))
+            bullet.set_position((bullet.get_position()[0], bullet.get_position()[1] + bullet.direction * 8))
             # выход пули за пределы экрана
             if bullet.get_position()[1] < 0 or bullet.get_position()[1] > WINDOW_HEIGHT:
                 if bullet.direction == -1:
@@ -704,6 +704,10 @@ class Game:
                 # нанесение урона главному герою
                 self.hero.health -= asteroid.hp
 
+                # снятие здоровья у героя
+                if self.hero.health < 0:
+                    self.hero.health = 0
+
                 # вывод показателя здоровья главного героя в консоль
                 print(f"HEALTH: {self.hero.health}")
 
@@ -752,6 +756,10 @@ class Game:
                     1]) < superasteroid.radius + self.hero.radius:
                 # нанесение урона главному герою
                 self.hero.health -= superasteroid.damage
+
+                # снятие здоровья у героя
+                if self.hero.health < 0:
+                    self.hero.health = 0
 
                 # вывод показателя здоровья главного героя в консоль
                 print(f"HEALTH: {self.hero.health}")
@@ -932,7 +940,6 @@ def main():
                 game.hero.score = 0
                 game.hero.lvl = 1
                 game.hero.speed = START_SPEED
-                game.hero.fps = fps
 
                 # удаление всех объектов
                 game.enemies = []
@@ -986,7 +993,7 @@ def main():
                 game.boss_status = 1
 
             # создание суперастероида
-            elif hero.score > 10000 and game.superasteroid_status == 0:
+            elif hero.score > 1200 and game.superasteroid_status == 0:
                 # удаление всех врагов, астероидов, пуль
                 game.enemies = []
                 game.buffs = []
@@ -1044,13 +1051,15 @@ def main():
 
             # применение спрайта фона
             screen.blit(bg.render(screen)[0], bg.render(screen)[1])
-
-            if game.boss_status == 1:
-                # спрайт lvl
-                game_font_boss_health = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
-                boss_health_surface = game_font_boss_health.render(f'Boss HP: {game.enemies[0].hp}', True, (0, 255, 252))
-                boss_health_rect = boss_health_surface.get_rect(center=(WINDOW_WIDTH - 640, WINDOW_HEIGHT - 40))
-                screen.blit(boss_health_surface, boss_health_rect)
+            try:
+                if game.boss_status == 1:
+                    # спрайт lvl
+                    game_font_boss_health = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
+                    boss_health_surface = game_font_boss_health.render(f'Boss HP: {game.enemies[0].hp}', True, (0, 255, 252))
+                    boss_health_rect = boss_health_surface.get_rect(center=(WINDOW_WIDTH - 640, WINDOW_HEIGHT - 40))
+                    screen.blit(boss_health_surface, boss_health_rect)
+            except IndexError:
+                pass
 
             # спрайт lvl
             game_font_lvl = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
@@ -1067,18 +1076,18 @@ def main():
             # спрайт колво очков
             game_font_score = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
             score_surface = game_font_score.render(f'Score: {hero.score}', True, (0, 255, 252))
-            score_rect = score_surface.get_rect(center=(WINDOW_WIDTH - 100, WINDOW_HEIGHT - 40))
+            score_rect = score_surface.get_rect(center=(WINDOW_WIDTH - 120, WINDOW_HEIGHT - 40))
             screen.blit(score_surface, score_rect)
 
             # спрайт здоровье
             game_font_health = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
             health_surface = game_font_health.render(str(hero.health), True, (0, 255, 0))
-            health_rect = health_surface.get_rect(center=(WINDOW_WIDTH - 250, WINDOW_HEIGHT - 40))
+            health_rect = health_surface.get_rect(center=(WINDOW_WIDTH - 270, WINDOW_HEIGHT - 40))
             screen.blit(health_surface, health_rect)
 
             image_heart = pygame.image.load('img/heart.png').convert_alpha()
             heart_image = pygame.transform.scale(image_heart, (45, 45))
-            heart_rect = heart_image.get_rect(center=(WINDOW_WIDTH - 310, WINDOW_HEIGHT - 40))
+            heart_rect = heart_image.get_rect(center=(WINDOW_WIDTH - 330, WINDOW_HEIGHT - 40))
 
             screen.blit(heart_image, heart_rect)
 
