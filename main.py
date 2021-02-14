@@ -6,9 +6,22 @@ import time
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1000, 800
 FPS = 60
 
+# для разработчиков
+# -----------------
 START_HEALTH = 1
 START_SPEED = 10
+START_SCORE = 300
+START_LVL = 3
 
+BULLET_SPEED = 8
+BG_SPEED = 1
+
+# появление боссов (очки)
+BOSS_OCCURRENCE = 300
+SUPERASTEROID_OCCURENSE = 1000
+
+
+# ----------------
 
 # класс главного героя
 class Hero(pygame.sprite.Sprite):
@@ -32,13 +45,13 @@ class Hero(pygame.sprite.Sprite):
         self.damage = 1
 
         # уровень игрока
-        self.lvl = 1
+        self.lvl = START_LVL
 
         # радиус главного героя
         self.radius = 20
 
         # заработанные очки
-        self.score = 0
+        self.score = START_SCORE
 
         # блокировка телепорта боссом
         self.locked_teleport = False
@@ -74,7 +87,7 @@ class Bullet(pygame.sprite.Sprite):
         self.damage = damage
 
         # радиус пули
-        self.radius = 7
+        self.radius = 2
 
     # получить координату
     def get_position(self):
@@ -143,7 +156,7 @@ class Enemy(pygame.sprite.Sprite):
             self.hp = 100
             self.speed = 1
             self.distanse = 0
-            self.radius = 100
+            self.radius = 70
 
     # получить координату
     def get_position(self):
@@ -185,7 +198,6 @@ class SuperAsteroid(pygame.sprite.Sprite):
         else:
             self.x = random.randint(0, WINDOW_WIDTH)
             self.y = self.radius + 10
-
 
         # урон от столкновения
         self.damage = self.type
@@ -320,15 +332,25 @@ class BG(pygame.sprite.Sprite):
     def render(self, screen):
         global image_bg
         self.image = pygame.transform.scale(image_bg, (WINDOW_WIDTH, WINDOW_HEIGHT))
-        self.rect = self.image.get_rect()
+        self.rect = self.image.get_rect(center=(self.x+ WINDOW_WIDTH // 2 , self.y))
         return (self.image, self.rect)
+
+
 
 
 # класс игры
 class Game:
-    def __init__(self, hero, screen):
+    def __init__(self, hero, screen, bg):
         # холст
         self.screen = screen
+
+
+        # фон
+        self.bg = bg
+        # список фонов
+        self.bgs = []
+        self.bgs.append(self.bg)
+
         # все динамичные объекты
         self.hero = hero
         self.bullets = []
@@ -346,8 +368,14 @@ class Game:
 
     # отрисовка всех динамичных объектов
     def render(self, screen):
+
+        # отрисовка фона
+        for bg in self.bgs:
+            bg.render(screen)
+
         # отрисовка главного героя
         self.hero.render(screen)
+
 
         # отрисовка всех врагов
         for enemy in self.enemies:
@@ -368,8 +396,6 @@ class Game:
         # отрисовка всех баффов
         for buff in self.buffs:
             buff.render(screen)
-
-
 
     # движение главного героя
     def move_hero(self):
@@ -412,7 +438,7 @@ class Game:
     def move_bullets(self):
         # проход по всем действующим пулям
         for i, bullet in enumerate(self.bullets):
-            bullet.set_position((bullet.get_position()[0], bullet.get_position()[1] + bullet.direction * 8))
+            bullet.set_position((bullet.get_position()[0], bullet.get_position()[1] + bullet.direction * BULLET_SPEED))
             # выход пули за пределы экрана
             if bullet.get_position()[1] < 0 or bullet.get_position()[1] > WINDOW_HEIGHT:
                 if bullet.direction == -1:
@@ -441,7 +467,7 @@ class Game:
                             del self.enemies[j]
                             self.hero.score += enemy.type
                             # вывод показателя очков
-                            print(f"SCORE: {self.hero.score}")
+
                         # увеличение счетчика пуль главного героя
                         # self.hero.bullets_count -= 1
                 # стрельба по астероидам
@@ -487,9 +513,6 @@ class Game:
                             # уничтожить астероид
                             del self.asteroids[j]
                             self.hero.score += asteroid.type
-
-                            # вывод показателя очков
-                            print(f"SCORE: {self.hero.score}")
 
                         # бонус за уничтожение( ускорение перезарядки)
                         self.hero.bullets_count -= 32
@@ -564,14 +587,13 @@ class Game:
 
                             # распад суперастероида на 2 меньшего класса
                             if superasteroid.type > 1:
-                                self.add_superasteroid(SuperAsteroid(superasteroid.type - 1, superasteroid.get_position()),
-                                                        SuperAsteroid(superasteroid.type - 1, superasteroid.get_position()))
+                                self.add_superasteroid(
+                                    SuperAsteroid(superasteroid.type - 1, superasteroid.get_position()),
+                                    SuperAsteroid(superasteroid.type - 1, superasteroid.get_position()))
 
                             # получение очков за уничтожение
                             self.hero.score += superasteroid.type * 8
 
-                            # вывод показателя очков
-                            print(f"SCORE: {self.hero.score}")
                             # уничтожить суперастероид
                             del self.superasteroids[j]
 
@@ -593,9 +615,6 @@ class Game:
                     if self.hero.health < 0:
                         self.hero.health = 0
                     del self.bullets[i]
-
-                    # вывод показателя здоровья главного героя в консоль
-                    print(f"HEALTH: {self.hero.health}")
 
     # движение врагов
     def move_enemies(self):
@@ -708,9 +727,6 @@ class Game:
                 if self.hero.health < 0:
                     self.hero.health = 0
 
-                # вывод показателя здоровья главного героя в консоль
-                print(f"HEALTH: {self.hero.health}")
-
             # движение астероида
             asteroid.set_position(
                 (asteroid.get_position()[0] + asteroid.dx, asteroid.get_position()[1] + asteroid.dy))
@@ -719,9 +735,11 @@ class Game:
     def move_superasteroids(self):
         # просмотр каждого супреастероида по отдельности
         for i, superasteroid in enumerate(self.superasteroids):
-            if superasteroid.get_position()[0] > WINDOW_WIDTH - superasteroid.radius or superasteroid.get_position()[0] < superasteroid.radius:
+            if superasteroid.get_position()[0] > WINDOW_WIDTH - superasteroid.radius or superasteroid.get_position()[
+                0] < superasteroid.radius:
                 superasteroid.dx *= -1
-            if superasteroid.get_position()[1] > WINDOW_HEIGHT - superasteroid.radius or superasteroid.get_position()[1] < superasteroid.radius:
+            if superasteroid.get_position()[1] > WINDOW_HEIGHT - superasteroid.radius or superasteroid.get_position()[
+                1] < superasteroid.radius:
                 superasteroid.dy *= -1
 
             # просмотр других суперастероидов
@@ -731,7 +749,7 @@ class Game:
                     if abs(superasteroid.get_position()[0] - superasteroid_2.get_position()[
                         0]) < superasteroid.radius + superasteroid_2.radius and abs(
                         superasteroid.get_position()[1] - superasteroid_2.get_position()[
-                        1]) < superasteroid.radius + superasteroid_2.radius:
+                            1]) < superasteroid.radius + superasteroid_2.radius:
 
                         # отталкивание суперастероидов друг от друга по оси х
                         if superasteroid.get_position()[0] > superasteroid_2.get_position()[0]:
@@ -760,9 +778,6 @@ class Game:
                 # снятие здоровья у героя
                 if self.hero.health < 0:
                     self.hero.health = 0
-
-                # вывод показателя здоровья главного героя в консоль
-                print(f"HEALTH: {self.hero.health}")
 
             # движение астероида
             superasteroid.set_position(
@@ -807,6 +822,7 @@ class Game:
                     self.hero.health = self.hero.max_health
                     self.hero.lvl += 1
                     self.hero.speed += 1
+                    print(f"COMBO BUFF")
 
                 # удалаение баффа
                 del self.buffs[i]
@@ -815,7 +831,20 @@ class Game:
             if buff.mode == "dinamic":
                 buff.set_position(
                     (buff.get_position()[0], buff.get_position()[1] + buff.speed))
+    def move_bg(self):
+        # движение фонов(из всегда 2)
+        for i, bg in enumerate(self.bgs):
+            bg.set_position((bg.get_position()[0], bg.get_position()[1] + BG_SPEED))
 
+            # добавление 2 фона в начале игры
+            if len(self.bgs) == 1:
+                self.add_bg(BG((0, -WINDOW_HEIGHT // 2)))
+
+            # замена фонов
+            if bg.get_position()[1] > WINDOW_HEIGHT + WINDOW_HEIGHT // 2:
+
+                del self.bgs[i]
+                self.add_bg(BG((0, -WINDOW_HEIGHT // 2)))
     # добавить врага
     def add_enemy(self, *enemies):
         # максимальное количество врагов на экране( увеличивается с возрастанием очков)
@@ -842,6 +871,11 @@ class Game:
     def add_buff(self, buff):
         self.buffs.append(buff)
 
+    # добавить фон
+    def add_bg(self, bg):
+        self.bgs.append(bg)
+
+
 # показать сообщение
 def show_message(screen, message):
     font = pygame.font.Font(None, 50)
@@ -862,13 +896,18 @@ def main():
     pygame.init()
     pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
+    pygame.mixer.music.load("sounds/win.mp3")
+    pygame.mixer.music.set_volume(0.3)
+
+    pygame.mixer.music.play(-1 )
+
     # создание менеджера для элементов интерфейса
     manager = pygame_gui.UIManager((800, 600), 'settings_for_endgame/theme.json')
 
     # создание кнопки начать игру заново
     try_again_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 75, 480), (150, 40)),
-                                                text='Try again',
-                                                manager=manager)
+                                                    text='Try again',
+                                                    manager=manager)
     # создание надписи в конце игры "GAME OVER" или "YOU WIN!"
     end_game_label = pygame_gui.elements.UILabel(
         relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 125, WINDOW_HEIGHT // 2 - 25), (250, 50)),
@@ -905,10 +944,10 @@ def main():
     hero = Hero((WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
 
     # создание фона
-    bg = BG((0, 0))
+    bg = BG((0, WINDOW_HEIGHT // 2))
 
     # создание игры
-    game = Game(hero, screen)
+    game = Game(hero, screen, bg)
 
     # часы для игры
     clock = pygame.time.Clock()
@@ -919,6 +958,7 @@ def main():
     # переменные завершения игры
     gameover = False
     win = False
+    pause = False
 
     # игровой цикл
     while running:
@@ -927,18 +967,28 @@ def main():
             # закрытие окна
             if event.type == pygame.QUIT:
                 running = False
+
+            # пауза в игре
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    if pause:
+                        pause = False
+                        pygame.mixer.music.unpause()
+                    else:
+                        pause = True
+
+
             # нажатие на кнопку try again
             if (event.type == pygame.USEREVENT and event.user_type == pygame_gui.UI_BUTTON_PRESSED and
                     event.ui_element == try_again_button):
-
                 # переменные окончания игры
                 gameover = False
                 win = False
 
                 # дефолтные параметры игрока
                 game.hero.health = START_HEALTH
-                game.hero.score = 0
-                game.hero.lvl = 1
+                game.hero.score = START_SCORE
+                game.hero.lvl = START_LVL
                 game.hero.speed = START_SPEED
 
                 # удаление всех объектов
@@ -957,11 +1007,12 @@ def main():
             manager.draw_ui(screen)
 
         # герой жив
-        if not gameover:
+        if not gameover and not pause:
             if game.hero.health <= 0:
                 gameover = True
 
             # движение всех динамичных объектов
+            game.move_bg()
             game.move_bullets()
             game.move_hero()
             game.move_enemies()
@@ -979,7 +1030,7 @@ def main():
                 event = 11
 
             # создание босса
-            if hero.score >= 300 and game.boss_status == 0 and game.superasteroid_status != 1:
+            if hero.score >= BOSS_OCCURRENCE and game.boss_status == 0 and game.superasteroid_status != 1:
                 # удаление всех врагов, астероидов, пуль
                 game.enemies = []
                 game.buffs = []
@@ -993,7 +1044,7 @@ def main():
                 game.boss_status = 1
 
             # создание суперастероида
-            elif hero.score > 1200 and game.superasteroid_status == 0:
+            elif hero.score > SUPERASTEROID_OCCURENSE and game.superasteroid_status == 0:
                 # удаление всех врагов, астероидов, пуль
                 game.enemies = []
                 game.buffs = []
@@ -1014,7 +1065,8 @@ def main():
             # создание врага 1, 2, 3 класса
             elif event % enemies_generation_time == 1:
                 # соотношение классов врагов
-                ratio_of_enemies = [enemies_generation_time * 10 - (hero.score // 50) * enemies_generation_time, enemies_generation_time * 4 - (hero.score // 50) * enemies_generation_time]
+                ratio_of_enemies = [enemies_generation_time * 10 - (hero.score // 50) * enemies_generation_time,
+                                    enemies_generation_time * 4 - (hero.score // 50) * enemies_generation_time]
 
                 # задание минимального значения
                 if ratio_of_enemies[0] < enemies_generation_time:
@@ -1024,7 +1076,6 @@ def main():
 
                 # враг 2 класса
                 if event % ratio_of_enemies[0] == 1:
-                    print(ratio_of_enemies)
                     enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 3)
 
                 # враг 3 класса
@@ -1049,17 +1100,25 @@ def main():
             # ---- СПРАЙТЫ----
             # начальноне окно
 
-            # применение спрайта фона
-            screen.blit(bg.render(screen)[0], bg.render(screen)[1])
+            # # применение спрайта фона
+            # screen.blit(bg.render(screen)[0], bg.render(screen)[1])
+
+            # применение спрайта фонаов
+            for bg in game.bgs:
+                screen.blit(bg.render(screen)[0], bg.render(screen)[1])
+
             try:
                 if game.boss_status == 1:
                     # спрайт lvl
                     game_font_boss_health = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
-                    boss_health_surface = game_font_boss_health.render(f'Boss HP: {game.enemies[0].hp}', True, (0, 255, 252))
+                    boss_health_surface = game_font_boss_health.render(f'Boss HP: {game.enemies[0].hp}', True,
+                                                                       (0, 255, 252))
                     boss_health_rect = boss_health_surface.get_rect(center=(WINDOW_WIDTH - 640, WINDOW_HEIGHT - 40))
                     screen.blit(boss_health_surface, boss_health_rect)
             except IndexError:
                 pass
+
+
 
             # спрайт lvl
             game_font_lvl = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
@@ -1090,6 +1149,7 @@ def main():
             heart_rect = heart_image.get_rect(center=(WINDOW_WIDTH - 330, WINDOW_HEIGHT - 40))
 
             screen.blit(heart_image, heart_rect)
+
 
             # применение спрайта для героя
             screen.blit(hero.render(screen)[0], hero.render(screen)[1])
@@ -1124,13 +1184,17 @@ def main():
         # конец игры
         else:
             # проверка на победу
-            if win:
-                end_game_label.set_text("YOU WIN!")
+            if pause:
+                end_game_label.set_text("PAUSE")
+                pygame.mixer.music.pause()
             else:
-                end_game_label.set_text("GAME OVER")
+                if win:
+                    end_game_label.set_text("YOU WIN!")
+                else:
+                    end_game_label.set_text("GAME OVER")
 
-            # показать кнопку попробовать еще
-            try_again_button.show()
+                # показать кнопку попробовать еще
+                try_again_button.show()
 
             # показать надпись
             end_game_label.show()
