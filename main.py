@@ -10,14 +10,14 @@ FPS = 60
 # -----------------
 START_HEALTH = 1
 START_SPEED = 10
-START_SCORE = 300
-START_LVL = 3
+START_SCORE = 1500
+START_LVL = 13
 
 BULLET_SPEED = 8
 BG_SPEED = 1
 
 # появление боссов (очки)
-BOSS_OCCURRENCE = 300
+BOSS_OCCURRENCE = 2000
 SUPERASTEROID_OCCURENSE = 1000
 
 
@@ -340,11 +340,11 @@ class BG(pygame.sprite.Sprite):
 
 # класс игры
 class Game:
-    def __init__(self, hero, screen, bg):
+    def __init__(self, hero, screen, bg, sounds):
         # холст
         self.screen = screen
-
-
+        # словарь всех звуков
+        self.sounds = sounds
         # фон
         self.bg = bg
         # список фонов
@@ -427,6 +427,7 @@ class Game:
             if self.hero.bullets_count < 320:
                 for i in range(1, self.hero.lvl + 1):
                     self.bullets.append(Bullet((next_x + i * 10 - self.hero.lvl * 7, next_y), -1, self.hero.damage))
+                    # pygame.mixer.Sound.play(self.sounds['shot'])
                 self.hero.bullets_count += 32
         if self.hero.bullets_count >= 0:
             self.hero.bullets_count -= 1
@@ -686,9 +687,12 @@ class Game:
             enemy.kd_counter += 1
             # выстрел врага
             if enemy.kd_counter == enemy.reload:
+                if enemy.type != 4:
+                    pygame.mixer.Sound.play(self.sounds['shot'])
                 self.bullets.append(Bullet(enemy.get_position(), 1, enemy.damage))
                 # дополнительные выстрелы у босса
                 if enemy.type == 4:
+                    pygame.mixer.Sound.play(self.sounds['shot_boss'])
                     self.bullets.append(
                         Bullet((enemy.get_position()[0] - 10, enemy.get_position()[1] + 10), 1, enemy.damage))
                     self.bullets.append(
@@ -797,6 +801,8 @@ class Game:
             if abs(buff.get_position()[0] - self.hero.get_position()[0]) < buff.radius + self.hero.radius and abs(
                     buff.get_position()[1] - self.hero.get_position()[1]) < buff.radius + self.hero.radius:
 
+                pygame.mixer.Sound.play(self.sounds["buff"])
+
                 # активация баффа
                 # восстановление здоровья
                 if buff.type == "HP":
@@ -826,6 +832,7 @@ class Game:
 
                 # удалаение баффа
                 del self.buffs[i]
+
 
             # движение баффа
             if buff.mode == "dinamic":
@@ -899,7 +906,21 @@ def main():
     pygame.mixer.music.load("sounds/win.mp3")
     pygame.mixer.music.set_volume(0.3)
 
-    pygame.mixer.music.play(-1 )
+    # pygame.mixer.music.play(-1)
+    buff_sound = pygame.mixer.Sound("sounds/buff.wav")
+    shot_sound = pygame.mixer.Sound("sounds/shot.wav")
+    shot_boss_sound = pygame.mixer.Sound("sounds/shot_3_special.wav")
+    gameover_sound = pygame.mixer.Sound('sounds/game_over.wav')
+    pause_sound = pygame.mixer.Sound('sounds/pause.wav')
+
+    # словарь всех звуков
+    sounds = {}
+    sounds["buff"] = buff_sound
+    sounds["shot"] = shot_sound
+    sounds["shot_boss"] = shot_boss_sound
+    sounds['gameover'] = [gameover_sound, False]
+    sounds['pause'] = pause_sound
+
 
     # создание менеджера для элементов интерфейса
     manager = pygame_gui.UIManager((800, 600), 'settings_for_endgame/theme.json')
@@ -947,7 +968,7 @@ def main():
     bg = BG((0, WINDOW_HEIGHT // 2))
 
     # создание игры
-    game = Game(hero, screen, bg)
+    game = Game(hero, screen, bg, sounds)
 
     # часы для игры
     clock = pygame.time.Clock()
@@ -971,6 +992,7 @@ def main():
             # пауза в игре
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    pygame.mixer.Sound.play(game.sounds['pause'])
                     if pause:
                         pause = False
                         pygame.mixer.music.unpause()
@@ -984,6 +1006,10 @@ def main():
                 # переменные окончания игры
                 gameover = False
                 win = False
+                # разрешение на воспроизводство звука GameOver
+                game.sounds['gameover'][1] = False
+
+                # pygame.mixer.music.play(-1 )
 
                 # дефолтные параметры игрока
                 game.hero.health = START_HEALTH
@@ -1186,12 +1212,19 @@ def main():
             # проверка на победу
             if pause:
                 end_game_label.set_text("PAUSE")
-                pygame.mixer.music.pause()
+                # pygame.mixer.music.pause()
             else:
                 if win:
                     end_game_label.set_text("YOU WIN!")
                 else:
                     end_game_label.set_text("GAME OVER")
+                    # pygame.mixer.music.stop()
+
+                    # звук Gameover
+                    if game.sounds["gameover"][1] is False: # проверка на повторение
+                        pygame.mixer.Sound.play(game.sounds['gameover'][0])
+                        # запрет на повторение
+                        game.sounds["gameover"][1] = True
 
                 # показать кнопку попробовать еще
                 try_again_button.show()
