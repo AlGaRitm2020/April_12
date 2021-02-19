@@ -1,4 +1,6 @@
+# -- coding: utf-8 --
 import pygame
+import pygame_menu
 import pygame_gui
 import random
 import time
@@ -8,10 +10,10 @@ FPS = 60
 
 # для разработчиков
 # -----------------
-START_HEALTH = 1
+START_HEALTH = 30
 START_SPEED = 10
 START_SCORE = 0
-START_LVL = 13
+START_LVL = 1
 
 BULLET_SPEED = 8
 BG_SPEED = 1
@@ -22,7 +24,6 @@ SUPERASTEROID_OCCURENSE = 1000
 
 
 # ----------------
-
 # класс главного героя
 class Hero(pygame.sprite.Sprite):
     def __init__(self, position):
@@ -314,7 +315,7 @@ class Buff(pygame.sprite.Sprite):
             self.rect = self.image.get_rect(center=(self.x, self.y))
             return (self.image, self.rect)
 
-
+# класс фона игры
 class BG(pygame.sprite.Sprite):
     def __init__(self, position, galaxy):
         pygame.sprite.Sprite.__init__(self)
@@ -904,13 +905,13 @@ def show_message(screen, message):
     screen.blit(text, (text_x, text_y))
 
 
-def main():
+def main(screen):
     # переменные изображения спрайтов
     global image_player, images_enemies, image_asteroid, image_bullet, image_bullet_2, bg_imgs, image_buff, image_superasteroid
 
     # инитилизация PyGame
-    pygame.init()
-    pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    # pygame.init()
+    # pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
     pygame.mixer.music.load("sounds/soundtrack.mp3")
     # pygame.mixer.music.set_volume(3)
@@ -958,8 +959,8 @@ def main():
     clock = pygame.time.Clock()
     time_delta = clock.tick(60) / 1000.0
 
-    # создание холста
-    screen = pygame.display.set_mode(WINDOW_SIZE)
+    # # создание холста
+    # screen = pygame.display.set_mode(WINDOW_SIZE)
 
     # ---------изображение объектов---------
     image_player = pygame.image.load('img/ship-min.png').convert_alpha()
@@ -976,9 +977,9 @@ def main():
 
     # фоны у галактик
     bg_imgs = [
+        pygame.image.load("img/bg-B1.png").convert_alpha(),
         pygame.image.load("img/bg-min.png").convert_alpha(),
-        pygame.image.load("img/bg-min.png").convert_alpha(),
-        pygame.image.load("img/bg-min.png").convert_alpha()
+        pygame.image.load("img/bg-B2.png").convert_alpha()
     ]
     image_buff = pygame.image.load("img/buff.png").convert_alpha()
     # ----------
@@ -1132,8 +1133,6 @@ def main():
             # ---- СПРАЙТЫ----
             # начальноне окно
 
-            # # применение спрайта фона
-            # screen.blit(bg.render(screen)[0], bg.render(screen)[1])
 
             # применение спрайта фонаов
             for bg in game.bgs:
@@ -1179,7 +1178,6 @@ def main():
             image_heart = pygame.image.load('img/heart.png').convert_alpha()
             heart_image = pygame.transform.scale(image_heart, (45, 45))
             heart_rect = heart_image.get_rect(center=(WINDOW_WIDTH - 330, WINDOW_HEIGHT - 40))
-
             screen.blit(heart_image, heart_rect)
 
 
@@ -1243,4 +1241,26 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        pygame.init()
+        surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+
+        mytheme = pygame_menu.themes.THEME_DARK.copy()
+
+        mytheme.title_font = pygame_menu.font.FONT_MUNRO
+        mytheme.widget_font = pygame_menu.font.FONT_MUNRO
+        mytheme.title_background_color = (3,94,232)
+
+        mytheme.background_color = (0,0,41)
+        mytheme.scrollbar_color = (0,0,0)
+
+        menu = pygame_menu.Menu(WINDOW_HEIGHT, WINDOW_WIDTH, 'April 18',
+                                theme=mytheme)
+        menu.add_button('Play', main, surface, font_color=(45,226,230))
+        menu.add_button('Quit', pygame_menu.events.EXIT, font_color=(45,226,230))
+
+        menu.mainloop(surface)
+
+    except:
+        pass
+
