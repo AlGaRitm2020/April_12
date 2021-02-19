@@ -17,8 +17,8 @@ BULLET_SPEED = 8
 BG_SPEED = 1
 
 # появление боссов (очки)
-BOSS_OCCURRENCE = 12210
-SUPERASTEROID_OCCURENSE = 0
+BOSS_OCCURRENCE = 0
+SUPERASTEROID_OCCURENSE = 1000
 
 
 # ----------------
@@ -316,10 +316,13 @@ class Buff(pygame.sprite.Sprite):
 
 
 class BG(pygame.sprite.Sprite):
-    def __init__(self, position):
+    def __init__(self, position, galaxy):
         pygame.sprite.Sprite.__init__(self)
         # координаты фона
         self.x, self.y = position
+
+        # галактика ( у каждой галактики свой фон)
+        self.galaxy = galaxy
 
     # получить координату
     def get_position(self):
@@ -331,7 +334,8 @@ class BG(pygame.sprite.Sprite):
 
     # отрисовка
     def render(self, screen):
-        global image_bg
+        global bg_imgs
+        image_bg = bg_imgs[self.galaxy]
         self.image = pygame.transform.scale(image_bg, (WINDOW_WIDTH, WINDOW_HEIGHT))
         self.rect = self.image.get_rect(center=(self.x+ WINDOW_WIDTH // 2 , self.y))
         return (self.image, self.rect)
@@ -366,6 +370,8 @@ class Game:
         self.boss_status = 0
         # статус суперастероида (неактивен, создан, побежден)
         self.superasteroid_status = 0
+
+        self.galaxy = 1
 
     # отрисовка всех динамичных объектов
     def render(self, screen):
@@ -462,6 +468,8 @@ class Game:
                             # уничтожение босса
                             if enemy.type == 4:
                                 self.boss_status = 2
+                                self.galaxy += 1
+                                print(self.galaxy)
 
                                 # дополнительные очки за уничтожение босса
                                 self.hero.score += 96
@@ -846,13 +854,13 @@ class Game:
 
             # добавление 2 фона в начале игры
             if len(self.bgs) == 1:
-                self.add_bg(BG((0, -WINDOW_HEIGHT // 2)))
+                self.add_bg(BG((0, -WINDOW_HEIGHT // 2,),self.galaxy))
 
             # замена фонов
             if bg.get_position()[1] > WINDOW_HEIGHT + WINDOW_HEIGHT // 2:
 
                 del self.bgs[i]
-                self.add_bg(BG((0, -WINDOW_HEIGHT // 2)))
+                self.add_bg(BG((0, -WINDOW_HEIGHT // 2), self.galaxy))
     # добавить врага
     def add_enemy(self, *enemies):
         # максимальное количество врагов на экране( увеличивается с возрастанием очков)
@@ -898,7 +906,7 @@ def show_message(screen, message):
 
 def main():
     # переменные изображения спрайтов
-    global image_player, images_enemies, image_asteroid, image_bullet, image_bullet_2, image_bg, image_buff, image_superasteroid
+    global image_player, images_enemies, image_asteroid, image_bullet, image_bullet_2, bg_imgs, image_buff, image_superasteroid
 
     # инитилизация PyGame
     pygame.init()
@@ -965,7 +973,13 @@ def main():
     image_superasteroid = pygame.image.load('img/superasteroid.png').convert_alpha()
     image_bullet = pygame.image.load('img/bullet_N.png').convert_alpha()
     image_bullet_2 = pygame.image.load('img/bullet_N2.png').convert_alpha()
-    image_bg = pygame.image.load("img/bg-min.png").convert_alpha()
+
+    # фоны у галактик
+    bg_imgs = [
+        pygame.image.load("img/bg-min.png").convert_alpha(),
+        pygame.image.load("img/bg-min.png").convert_alpha(),
+        pygame.image.load("img/bg-min.png").convert_alpha()
+    ]
     image_buff = pygame.image.load("img/buff.png").convert_alpha()
     # ----------
 
@@ -973,7 +987,7 @@ def main():
     hero = Hero((WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
 
     # создание фона
-    bg = BG((0, WINDOW_HEIGHT // 2))
+    bg = BG((0, WINDOW_HEIGHT // 2), 1)
 
     # создание игры
     game = Game(hero, screen, bg, sounds)
@@ -1099,27 +1113,10 @@ def main():
 
             # создание врага 1, 2, 3 класса
             elif event % enemies_generation_time == 1:
-                # соотношение классов врагов
-                ratio_of_enemies = [enemies_generation_time * 10 - (hero.score // 50) * enemies_generation_time,
-                                    enemies_generation_time * 4 - (hero.score // 50) * enemies_generation_time]
 
-                # задание минимального значения
-                if ratio_of_enemies[0] < enemies_generation_time:
-                    ratio_of_enemies[0] = enemies_generation_time
-                if ratio_of_enemies[1] < enemies_generation_time:
-                    ratio_of_enemies[1] = enemies_generation_time
+                enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), game.galaxy)
 
-                # враг 2 класса
-                if event % ratio_of_enemies[0] == 1:
-                    enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 3)
 
-                # враг 3 класса
-                elif event % ratio_of_enemies[1] == 1:
-                    enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 2)
-
-                # враг 1 класса
-                else:
-                    enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), 1)
 
                 # добавить врага
                 game.add_enemy(enemy)
