@@ -917,7 +917,6 @@ def main(screen):
     # pygame.mixer.music.set_volume(3)
 
     pygame.mixer.music.play(-1)
-
     # звуки
     buff_sound = pygame.mixer.Sound("sounds/buff.wav")
     buff_sound.set_volume(.4)
@@ -1241,26 +1240,27 @@ def main(screen):
 
 
 if __name__ == "__main__":
-    try:
-        pygame.init()
-        surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    pygame.init()
+    surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
-        mytheme = pygame_menu.themes.THEME_DARK.copy()
+    mytheme = pygame_menu.themes.THEME_DARK.copy()
 
-        mytheme.title_font = pygame_menu.font.FONT_MUNRO
-        mytheme.widget_font = pygame_menu.font.FONT_MUNRO
-        mytheme.title_background_color = (3,94,232)
+    mytheme.title_font = pygame_menu.font.FONT_MUNRO
+    mytheme.widget_font = pygame_menu.font.FONT_MUNRO
 
-        mytheme.background_color = (0,0,41)
-        mytheme.scrollbar_color = (0,0,0)
+    mytheme.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_TITLE_ONLY_DIAGONAL
 
-        menu = pygame_menu.Menu(WINDOW_HEIGHT, WINDOW_WIDTH, 'April 18',
-                                theme=mytheme)
-        menu.add_button('Play', main, surface, font_color=(45,226,230))
-        menu.add_button('Quit', pygame_menu.events.EXIT, font_color=(45,226,230))
+    mytheme.widget_font_size = 50
+    mytheme.title_font_size = 70
 
-        menu.mainloop(surface)
+    mytheme.title_background_color = (3,94,232)
+    mytheme.background_color = (0,0,41)
 
-    except:
-        pass
+    menu = pygame_menu.Menu(WINDOW_HEIGHT, WINDOW_WIDTH, 'April 18',
+                            theme=mytheme)
+    menu.add_button('Play', main, surface, font_color=(45,226,230))
+    menu.add_button('Quit', pygame_menu.events.EXIT, font_color=(45,226,230))
+
+    menu.mainloop(surface)
+
 
