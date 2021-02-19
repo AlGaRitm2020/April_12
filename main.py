@@ -13,7 +13,7 @@ FPS = 60
 START_HEALTH = 30
 START_SPEED = 10
 START_SCORE = 0
-START_LVL = 1
+START_LVL = 10
 
 BULLET_SPEED = 8
 BG_SPEED = 1
@@ -434,6 +434,7 @@ class Game:
         if pygame.key.get_pressed()[pygame.K_SPACE] or pygame.mouse.get_pressed() == (1, 0, 0):
             if self.hero.bullets_count < 320:
                 for i in range(1, self.hero.lvl + 1):
+                    pygame.mixer.Sound.play(self.sounds['hero_shot'])
                     self.bullets.append(Bullet((next_x + i * 10 - self.hero.lvl * 7, next_y), -1, self.hero.damage))
                     # pygame.mixer.Sound.play(self.sounds['shot'])
                 self.hero.bullets_count += 32
@@ -468,14 +469,16 @@ class Game:
                         if enemy.hp == 0:
                             # уничтожение босса
                             if enemy.type == 4:
+                                pygame.mixer.Sound.play(self.sounds['big_explosion'])
                                 self.boss_status = 2
                                 self.galaxy += 1
-                                print(self.galaxy)
+
 
                                 # дополнительные очки за уничтожение босса
                                 self.hero.score += 96
 
                             del self.enemies[j]
+                            pygame.mixer.Sound.play(self.sounds['explosion_enemy'])
                             self.hero.score += enemy.type
                             # вывод показателя очков
 
@@ -523,6 +526,7 @@ class Game:
 
                             # уничтожить астероид
                             del self.asteroids[j]
+                            pygame.mixer.Sound.play(self.sounds['explosion_asteroid'])
                             self.hero.score += asteroid.type
 
                         # бонус за уничтожение( ускорение перезарядки)
@@ -620,7 +624,9 @@ class Game:
                     self.hero.get_position()[1] - bullet.get_position()[1]) < self.hero.radius + bullet.radius:
 
                     # уничтожение пули
+                    pygame.mixer.Sound.play(self.sounds['shot_to_hero'])
                     self.hero.health -= bullet.damage
+
 
                     # снятие здоровья у героя
                     if self.hero.health < 0:
@@ -657,6 +663,9 @@ class Game:
 
                         # запуск ульты 2 (запрет на телепортацию)
                         if event % 1500 == 1:
+
+                            pygame.mixer.Sound.play(self.sounds['boss_lock'])
+
                             self.hero.locked_teleport = True
                             enemy.timer += 1
 
@@ -733,8 +742,10 @@ class Game:
                 asteroid.get_position()[1] - self.hero.get_position()[1]) < asteroid.radius + self.hero.radius:
                 # уничтожение астероида
                 del self.asteroids[i]
+                pygame.mixer.Sound.play(self.sounds['explosion_asteroid'])
 
                 # нанесение урона главному герою
+                pygame.mixer.Sound.play(self.sounds['shot_to_hero'])
                 self.hero.health -= asteroid.hp
 
                 # снятие здоровья у героя
@@ -788,6 +799,7 @@ class Game:
                     1]) < superasteroid.radius + self.hero.radius:
                 # нанесение урона главному герою
                 self.hero.health -= superasteroid.damage
+                pygame.mixer.Sound.play(self.sounds['shot_to_hero'])
 
                 # снятие здоровья у героя
                 if self.hero.health < 0:
@@ -914,10 +926,9 @@ def main(screen):
     # pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
     pygame.mixer.music.load("sounds/soundtrack.mp3")
-    # pygame.mixer.music.set_volume(3)
+    pygame.mixer.music.set_volume(.3)
 
     pygame.mixer.music.play(-1)
-
     # звуки
     buff_sound = pygame.mixer.Sound("sounds/buff.wav")
     buff_sound.set_volume(.4)
@@ -927,15 +938,30 @@ def main(screen):
     gameover_sound = pygame.mixer.Sound('sounds/game_over.wav')
     gameover_sound.set_volume(1)
     pause_sound = pygame.mixer.Sound('sounds/pause.wav')
+    boss_lock_sound = pygame.mixer.Sound('sounds/lock.wav')
+    boss_lock_sound.set_volume(4)
+    shot_to_hero = pygame.mixer.Sound("sounds/explosion_1.wav")
 
+    hero_shot_sound = pygame.mixer.Sound('sounds/shot_2.wav')
+    big_explosion_sound = pygame.mixer.Sound('sounds/explosion_2.wav')
+    big_explosion_sound.set_volume(10)
+
+    explosion_enemy_sound = pygame.mixer.Sound('sounds/explosion_4.wav')
+    explosion_asteroid_sound = pygame.mixer.Sound('sounds/explosion_3.wav')
+    explosion_asteroid_sound.set_volume(3)
     # словарь всех звуков
     sounds = {}
     sounds["buff"] = buff_sound
     sounds["shot"] = shot_sound
     sounds["shot_boss"] = shot_boss_sound
     sounds['gameover'] = [gameover_sound, False]
-
     sounds['pause'] = pause_sound
+    sounds['explosion_enemy'] = explosion_enemy_sound
+    sounds['explosion_asteroid'] = explosion_asteroid_sound
+    sounds['big_explosion'] = big_explosion_sound
+    sounds['boss_lock'] = boss_lock_sound
+    sounds['hero_shot'] = hero_shot_sound
+    sounds['shot_to_hero'] = shot_to_hero
 
 
 
@@ -1238,29 +1264,31 @@ def main(screen):
 
         pygame.display.flip()
     pygame.quit()
+    quit()
 
 
 if __name__ == "__main__":
-    try:
-        pygame.init()
-        surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    pygame.init()
+    surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
-        mytheme = pygame_menu.themes.THEME_DARK.copy()
+    mytheme = pygame_menu.themes.THEME_DARK.copy()
 
-        mytheme.title_font = pygame_menu.font.FONT_MUNRO
-        mytheme.widget_font = pygame_menu.font.FONT_MUNRO
-        mytheme.title_background_color = (3,94,232)
+    mytheme.title_font = pygame_menu.font.FONT_MUNRO
+    mytheme.widget_font = pygame_menu.font.FONT_MUNRO
 
-        mytheme.background_color = (0,0,41)
-        mytheme.scrollbar_color = (0,0,0)
+    mytheme.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_TITLE_ONLY_DIAGONAL
 
-        menu = pygame_menu.Menu(WINDOW_HEIGHT, WINDOW_WIDTH, 'April 18',
-                                theme=mytheme)
-        menu.add_button('Play', main, surface, font_color=(45,226,230))
-        menu.add_button('Quit', pygame_menu.events.EXIT, font_color=(45,226,230))
+    mytheme.widget_font_size = 50
+    mytheme.title_font_size = 70
 
-        menu.mainloop(surface)
+    mytheme.title_background_color = (3,94,232)
+    mytheme.background_color = (0,0,41)
 
-    except:
-        pass
+    menu = pygame_menu.Menu(WINDOW_HEIGHT, WINDOW_WIDTH, 'April 18',
+                            theme=mytheme)
+    menu.add_button('Play', main, surface, font_color=(45,226,230))
+    menu.add_button('Quit', pygame_menu.events.EXIT, font_color=(45,226,230))
+
+    menu.mainloop(surface)
+
 
