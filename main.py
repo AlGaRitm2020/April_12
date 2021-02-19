@@ -10,14 +10,14 @@ FPS = 60
 # -----------------
 START_HEALTH = 1
 START_SPEED = 10
-START_SCORE = 1500
+START_SCORE = 0
 START_LVL = 13
 
 BULLET_SPEED = 8
 BG_SPEED = 1
 
 # появление боссов (очки)
-BOSS_OCCURRENCE = 2000
+BOSS_OCCURRENCE = 0
 SUPERASTEROID_OCCURENSE = 1000
 
 
@@ -157,6 +157,7 @@ class Enemy(pygame.sprite.Sprite):
             self.speed = 1
             self.distanse = 0
             self.radius = 70
+            self.reload = 10
 
     # получить координату
     def get_position(self):
@@ -903,10 +904,10 @@ def main():
     pygame.init()
     pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
-    pygame.mixer.music.load("sounds/win.mp3")
-    pygame.mixer.music.set_volume(0.3)
+    pygame.mixer.music.load("sounds/soundtrack.mp3")
+    pygame.mixer.music.set_volume(1)
 
-    # pygame.mixer.music.play(-1)
+    pygame.mixer.music.play(-1)
     buff_sound = pygame.mixer.Sound("sounds/buff.wav")
     shot_sound = pygame.mixer.Sound("sounds/shot.wav")
     shot_boss_sound = pygame.mixer.Sound("sounds/shot_3_special.wav")
@@ -997,6 +998,7 @@ def main():
                         pause = False
                         pygame.mixer.music.unpause()
                     else:
+                        pygame.mixer.music.pause()
                         pause = True
 
 
