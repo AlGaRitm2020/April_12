@@ -17,8 +17,8 @@ BULLET_SPEED = 8
 BG_SPEED = 1
 
 # появление боссов (очки)
-BOSS_OCCURRENCE = 0
-SUPERASTEROID_OCCURENSE = 1000
+BOSS_OCCURRENCE = 12210
+SUPERASTEROID_OCCURENSE = 0
 
 
 # ----------------
@@ -905,13 +905,18 @@ def main():
     pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
     pygame.mixer.music.load("sounds/soundtrack.mp3")
-    pygame.mixer.music.set_volume(1)
+    # pygame.mixer.music.set_volume(3)
 
     pygame.mixer.music.play(-1)
+
+    # звуки
     buff_sound = pygame.mixer.Sound("sounds/buff.wav")
+    buff_sound.set_volume(.4)
     shot_sound = pygame.mixer.Sound("sounds/shot.wav")
     shot_boss_sound = pygame.mixer.Sound("sounds/shot_3_special.wav")
+    shot_boss_sound.set_volume(.1)
     gameover_sound = pygame.mixer.Sound('sounds/game_over.wav')
+    gameover_sound.set_volume(1)
     pause_sound = pygame.mixer.Sound('sounds/pause.wav')
 
     # словарь всех звуков
@@ -920,7 +925,9 @@ def main():
     sounds["shot"] = shot_sound
     sounds["shot_boss"] = shot_boss_sound
     sounds['gameover'] = [gameover_sound, False]
+
     sounds['pause'] = pause_sound
+
 
 
     # создание менеджера для элементов интерфейса
@@ -1011,7 +1018,7 @@ def main():
                 # разрешение на воспроизводство звука GameOver
                 game.sounds['gameover'][1] = False
 
-                # pygame.mixer.music.play(-1 )
+                pygame.mixer.music.play(-1 )
 
                 # дефолтные параметры игрока
                 game.hero.health = START_HEALTH
@@ -1220,7 +1227,7 @@ def main():
                     end_game_label.set_text("YOU WIN!")
                 else:
                     end_game_label.set_text("GAME OVER")
-                    # pygame.mixer.music.stop()
+                    pygame.mixer.music.stop()
 
                     # звук Gameover
                     if game.sounds["gameover"][1] is False: # проверка на повторение
