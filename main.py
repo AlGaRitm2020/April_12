@@ -12,7 +12,7 @@ FPS = 60
 # -----------------
 START_HEALTH = 30
 START_SPEED = 10
-START_SCORE = 0
+START_SCORE = 1000
 START_LVL = 10
 
 BULLET_SPEED = 8
@@ -20,7 +20,7 @@ BG_SPEED = 1
 
 # появление боссов (очки)
 BOSS_OCCURRENCE = 0
-SUPERASTEROID_OCCURENSE = 1000
+SUPERASTEROID_OCCURENSE = 2000
 
 
 # ----------------
@@ -877,7 +877,13 @@ class Game:
     # добавить врага
     def add_enemy(self, *enemies):
         # максимальное количество врагов на экране( увеличивается с возрастанием очков)
-        self.max_count_of_enemies = 5 + self.hero.score // 100
+        global difficulty
+        if difficulty == 1:
+            self.max_count_of_enemies = 5 + self.hero.score // 100
+        elif difficulty == 2:
+            self.max_count_of_enemies = 5 + self.hero.score // 87
+        else:
+            self.max_count_of_enemies = 5 + self.hero.score // 75
         # добавление врагов
         for enemy in enemies:
             # проверка на превышение макс кол-ва
@@ -916,6 +922,10 @@ def show_message(screen, message):
     pygame.draw.rect(screen, (30, 144, 255), (text_x - 10, text_y - 10, text_w + 20, text_h + 20))
     screen.blit(text, (text_x, text_y))
 
+def set_difficulty(value, difficult):
+    global difficulty
+    difficulty = difficult
+    print(difficulty)
 
 def main(screen):
     # переменные изображения спрайтов
@@ -977,6 +987,7 @@ def main(screen):
         relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 125, WINDOW_HEIGHT // 2 - 25), (250, 50)),
         text='',
         manager=manager)
+
 
     # скрыть кнопку
     try_again_button.hide()
@@ -1075,6 +1086,7 @@ def main(screen):
                 game.superasteroids = []
                 game.boss_status = 0
                 game.superasteroid_status = 0
+                game.galaxy = 1
                 try_again_button.hide()
 
             # менеджер pygame_gui (для интерфейса)
@@ -1100,7 +1112,17 @@ def main(screen):
             if game.boss_status != 1 and game.superasteroid_status != 1:
                 # генерация события например создание врага
                 event = random.randint(0, 100000)
-                enemies_generation_time = 101 - (hero.score // 20)
+
+                # скорость появления врагов(зависит от сложности игры)
+                global difficulty
+                if difficulty == 1:
+                    enemies_generation_time = 101 - (hero.score // 20)
+                elif difficulty == 2:
+                    enemies_generation_time = 101 - (hero.score // 15)
+                elif difficulty == 3:
+                    enemies_generation_time = 101 - (hero.score // 10)
+                if enemies_generation_time <= 0:
+                    enemies_generation_time = 1
             else:
                 # задание неизменяемого события, которое ничего не делает
                 event = 11
@@ -1139,7 +1161,7 @@ def main(screen):
 
 
             # создание врага 1, 2, 3 класса
-            elif event % enemies_generation_time == 1:
+            elif event % enemies_generation_time == 0:
 
                 enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), game.galaxy)
 
@@ -1284,9 +1306,16 @@ if __name__ == "__main__":
     mytheme.title_background_color = (3,94,232)
     mytheme.background_color = (0,0,41)
 
-    menu = pygame_menu.Menu(WINDOW_HEIGHT, WINDOW_WIDTH, 'April 18',
+    menu = pygame_menu.Menu(WINDOW_HEIGHT, WINDOW_WIDTH, 'April 12',
                             theme=mytheme)
+
+    # дефолтная сложность игры(easy)
+    global difficulty
+    difficulty = 1
+
+    # добавление объектов на главное меню
     menu.add_button('Play', main, surface, font_color=(45,226,230))
+    menu.add_selector('Difficulty :', [('Easy', 1),('Medium', 2),('Hard', 3)], onchange=set_difficulty)
     menu.add_button('Quit', pygame_menu.events.EXIT, font_color=(45,226,230))
 
     menu.mainloop(surface)
