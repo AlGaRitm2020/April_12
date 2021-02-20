@@ -4,7 +4,6 @@ import pygame_menu
 import pygame_gui
 import random
 import json
-import time
 
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1000, 800
 FPS = 60
@@ -20,7 +19,7 @@ BULLET_SPEED = 8
 BG_SPEED = 3
 
 # появление боссов (очки)
-BOSS_OCCURRENCE = 0
+BOSS_OCCURRENCE = 300
 SUPERASTEROID_OCCURENSE = 1000
 
 
@@ -425,6 +424,7 @@ class Game:
             else:
                 next_x = 0
 
+        # нажатие клавиш пользователем, движение героя
         if pygame.key.get_pressed()[pygame.K_a]:
             next_x -= self.hero.speed
         if pygame.key.get_pressed()[pygame.K_d]:
@@ -438,7 +438,8 @@ class Game:
             if self.hero.bullets_count < 320:
                 for i in range(1, self.hero.lvl + 1):
                     pygame.mixer.Sound.play(self.sounds['hero_shot'])
-                    self.bullets.append(Bullet((next_x + i * 10 - self.hero.lvl * 7, next_y), -1, self.hero.damage))
+                    self.bullets.append(Bullet((next_x + i * 10 - self.hero.lvl * 7, next_y),
+                                               -1, self.hero.damage))
 
                 self.hero.bullets_count += 32
         if self.hero.bullets_count >= 0:
@@ -451,7 +452,8 @@ class Game:
     def move_bullets(self):
         # проход по всем действующим пулям
         for i, bullet in enumerate(self.bullets):
-            bullet.set_position((bullet.get_position()[0], bullet.get_position()[1] + bullet.direction * BULLET_SPEED))
+            bullet.set_position((bullet.get_position()[0], bullet.get_position()[1]
+                                 + bullet.direction * BULLET_SPEED))
             # выход пули за пределы экрана
             if bullet.get_position()[1] < 0 or bullet.get_position()[1] > WINDOW_HEIGHT:
                 if bullet.direction == -1:
@@ -462,8 +464,10 @@ class Game:
             if bullet.direction == -1:
                 # стрельба по врагам
                 for j, enemy in enumerate(self.enemies):
-                    if abs(enemy.get_position()[0] - bullet.get_position()[0]) < enemy.radius + bullet.radius and abs(
-                            enemy.get_position()[1] - bullet.get_position()[1]) < enemy.radius + bullet.radius:
+                    if abs(enemy.get_position()[0] - bullet.get_position()[0]) \
+                            < enemy.radius + bullet.radius and abs(
+                        enemy.get_position()[1] - bullet.get_position()[1]) \
+                            < enemy.radius + bullet.radius:
                         # уничтожение пули и нанесение урона врагу
                         del self.bullets[i]
                         enemy.hp -= self.hero.damage
@@ -490,7 +494,8 @@ class Game:
                 for j, asteroid in enumerate(self.asteroids):
                     if abs(asteroid.get_position()[0] - bullet.get_position()[
                         0]) < asteroid.radius + bullet.radius and abs(
-                        asteroid.get_position()[1] - bullet.get_position()[1]) < asteroid.radius + bullet.radius:
+                        asteroid.get_position()[1] - bullet.get_position()[1]) \
+                            < asteroid.radius + bullet.radius:
 
                         # уничтожение пули и нанесение урона астероиду
                         try:
@@ -609,8 +614,10 @@ class Game:
                             # распад суперастероида на 2 меньшего класса
                             if superasteroid.type > 1:
                                 self.add_superasteroid(
-                                    SuperAsteroid(superasteroid.type - 1, superasteroid.get_position()),
-                                    SuperAsteroid(superasteroid.type - 1, superasteroid.get_position()))
+                                    SuperAsteroid(superasteroid.type - 1,
+                                                  superasteroid.get_position()),
+                                    SuperAsteroid(superasteroid.type - 1,
+                                                  superasteroid.get_position()))
 
                             # получение очков за уничтожение
                             self.hero.score += superasteroid.type * 8
@@ -622,12 +629,13 @@ class Game:
                             if not self.superasteroids:
                                 self.superasteroid_status = 2
 
-
             # вражеские пули
             else:
-                if abs(self.hero.get_position()[0] - bullet.get_position()[0]) < self.hero.radius + bullet.radius \
+                if abs(self.hero.get_position()[0] - bullet.get_position()[0]) \
+                        < self.hero.radius + bullet.radius \
                         and abs(
-                    self.hero.get_position()[1] - bullet.get_position()[1]) < self.hero.radius + bullet.radius:
+                    self.hero.get_position()[1] - bullet.get_position()[1]) \
+                        < self.hero.radius + bullet.radius:
 
                     # уничтожение пули
                     pygame.mixer.Sound.play(self.sounds['shot_to_hero'])
@@ -662,9 +670,12 @@ class Game:
                         if event % 1200 == 1:
                             pygame.mixer.Sound.play(self.sounds['boss_ulta'])
                             # созадание врагов 3 класса
-                            boss_support_1 = Enemy((enemy.get_position()[0] + 10, enemy.get_position()[1]), 3)
-                            boss_support_2 = Enemy((enemy.get_position()[0] - 10, enemy.get_position()[1]), 3)
-                            boss_support_3 = Enemy((enemy.get_position()[0], enemy.get_position()[1] + 20), 3)
+                            boss_support_1 = Enemy((enemy.get_position()[0] + 10,
+                                                    enemy.get_position()[1]), 3)
+                            boss_support_2 = Enemy((enemy.get_position()[0] - 10,
+                                                    enemy.get_position()[1]), 3)
+                            boss_support_3 = Enemy((enemy.get_position()[0],
+                                                    enemy.get_position()[1] + 20), 3)
                             self.add_enemy(boss_support_1, boss_support_2, boss_support_3)
 
                         # запуск ульты 2 (запрет на телепортацию)
@@ -718,17 +729,22 @@ class Game:
                 if enemy.type == 4:
                     pygame.mixer.Sound.play(self.sounds['shot_boss'])
                     self.bullets.append(
-                        Bullet((enemy.get_position()[0] - 10, enemy.get_position()[1] + 10), 1, enemy.damage))
+                        Bullet((enemy.get_position()[0] - 10,
+                                enemy.get_position()[1] + 10), 1, enemy.damage))
                     self.bullets.append(
-                        Bullet((enemy.get_position()[0] + 10, enemy.get_position()[1] + 10), 1, enemy.damage))
+                        Bullet((enemy.get_position()[0] + 10,
+                                enemy.get_position()[1] + 10), 1, enemy.damage))
                     self.bullets.append(
-                        Bullet((enemy.get_position()[0] - 20, enemy.get_position()[1] + 20), 1, enemy.damage))
+                        Bullet((enemy.get_position()[0] - 20,
+                                enemy.get_position()[1] + 20), 1, enemy.damage))
                     self.bullets.append(
-                        Bullet((enemy.get_position()[0] + 20, enemy.get_position()[1] + 20), 1, enemy.damage))
+                        Bullet((enemy.get_position()[0] + 20,
+                                enemy.get_position()[1] + 20), 1, enemy.damage))
 
                 enemy.kd_counter = 0
             # движение врага
-            enemy.set_position((enemy.get_position()[0] + enemy.dx, enemy.get_position()[1] + enemy.dy))
+            enemy.set_position((enemy.get_position()[0] + enemy.dx,
+                                enemy.get_position()[1] + enemy.dy))
 
             if not (0 <= enemy.get_position()[0] <= WINDOW_WIDTH):
                 enemy.dx *= -1
@@ -744,7 +760,8 @@ class Game:
             # столкновение астероида с главным героем
             if abs(asteroid.get_position()[0] - self.hero.get_position()[
                 0]) < asteroid.radius + self.hero.radius and abs(
-                asteroid.get_position()[1] - self.hero.get_position()[1]) < asteroid.radius + self.hero.radius:
+                asteroid.get_position()[1] - self.hero.get_position()[1]) \
+                    < asteroid.radius + self.hero.radius:
                 # уничтожение астероида
                 del self.asteroids[i]
                 pygame.mixer.Sound.play(self.sounds['explosion_asteroid'])
@@ -759,25 +776,29 @@ class Game:
 
             # движение астероида
             asteroid.set_position(
-                (asteroid.get_position()[0] + asteroid.dx, asteroid.get_position()[1] + asteroid.dy))
+                (asteroid.get_position()[0] + asteroid.dx,
+                 asteroid.get_position()[1] + asteroid.dy))
 
     # движение астероидов
     def move_superasteroids(self):
         # просмотр каждого супреастероида по отдельности
         for i, superasteroid in enumerate(self.superasteroids):
-            if superasteroid.get_position()[0] > WINDOW_WIDTH - superasteroid.radius or superasteroid.get_position()[
-                0] < superasteroid.radius:
+            if superasteroid.get_position()[0] > WINDOW_WIDTH \
+                    - superasteroid.radius or superasteroid.get_position()[0] \
+                    < superasteroid.radius:
                 superasteroid.dx *= -1
-            if superasteroid.get_position()[1] > WINDOW_HEIGHT - superasteroid.radius or superasteroid.get_position()[
-                1] < superasteroid.radius:
+            if superasteroid.get_position()[1] > WINDOW_HEIGHT \
+                    - superasteroid.radius or superasteroid.get_position()[1] \
+                    < superasteroid.radius:
                 superasteroid.dy *= -1
 
             # просмотр других суперастероидов
             for superasteroid_2 in self.superasteroids:
                 if superasteroid != superasteroid_2:
                     # столкновение двух суперастероидов
-                    if abs(superasteroid.get_position()[0] - superasteroid_2.get_position()[
-                        0]) < superasteroid.radius + superasteroid_2.radius and abs(
+                    if abs(superasteroid.get_position()[0]
+                           - superasteroid_2.get_position()[
+                               0]) < superasteroid.radius + superasteroid_2.radius and abs(
                         superasteroid.get_position()[1] - superasteroid_2.get_position()[
                             1]) < superasteroid.radius + superasteroid_2.radius:
 
@@ -825,8 +846,10 @@ class Game:
                 del self.buffs[i]
 
             # столкновение баффа с главным героем
-            if abs(buff.get_position()[0] - self.hero.get_position()[0]) < buff.radius + self.hero.radius and abs(
-                    buff.get_position()[1] - self.hero.get_position()[1]) < buff.radius + self.hero.radius:
+            if abs(buff.get_position()[0] - self.hero.get_position()[0]) < \
+                    buff.radius + self.hero.radius and abs(
+                buff.get_position()[1] - self.hero.get_position()[1]) < \
+                    buff.radius + self.hero.radius:
 
                 pygame.mixer.Sound.play(self.sounds["buff"])
 
@@ -1101,7 +1124,8 @@ def main(screen):
                         pause = True
 
             # нажатие на кнопку try again
-            if (event.type == pygame.USEREVENT and event.user_type == pygame_gui.UI_BUTTON_PRESSED and
+            if (event.type == pygame.USEREVENT and
+                    event.user_type == pygame_gui.UI_BUTTON_PRESSED and
                     event.ui_element == try_again_button):
                 # переменные окончания игры
                 gameover = False
@@ -1167,7 +1191,9 @@ def main(screen):
                 event = 11
 
             # создание босса
-            if hero.score >= BOSS_OCCURRENCE and game.boss_status == 0 and game.superasteroid_status != 1:
+            if hero.score >= BOSS_OCCURRENCE \
+                    and game.boss_status == 0 \
+                    and game.superasteroid_status != 1:
                 # удаление всех врагов, астероидов, пуль
                 game.enemies = []
                 game.buffs = []
@@ -1198,10 +1224,8 @@ def main(screen):
                 gameover = True
                 win = True
 
-
             # создание врага 1, 2, 3 класса
             elif event % enemies_generation_time == 0:
-
                 enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), game.galaxy)
 
                 # добавить врага
@@ -1226,9 +1250,11 @@ def main(screen):
                 if game.boss_status == 1:
                     # спрайт lvl
                     game_font_boss_health = pygame.font.Font('data/pixel_font.ttf', 70)
-                    boss_health_surface = game_font_boss_health.render(f'Boss HP: {game.enemies[0].hp}', True,
-                                                                       (0, 255, 252))
-                    boss_health_rect = boss_health_surface.get_rect(center=(WINDOW_WIDTH - 640, WINDOW_HEIGHT - 40))
+                    boss_health_surface = game_font_boss_health.render(
+                        f'Boss HP: {game.enemies[0].hp}', True,
+                        (0, 255, 252))
+                    boss_health_rect = boss_health_surface.get_rect(
+                        center=(WINDOW_WIDTH - 640, WINDOW_HEIGHT - 40))
                     screen.blit(boss_health_surface, boss_health_rect)
             except IndexError:
                 pass
@@ -1247,7 +1273,8 @@ def main(screen):
 
             # спрайт highscore
             game_font_highscore = pygame.font.Font('data/pixel_font.ttf', 70)
-            highscore_surface = game_font_highscore.render(f'HIGHSCORE: {highscore}', True, (0, 255, 252))
+            highscore_surface = game_font_highscore.render(
+                f'HIGHSCORE: {highscore}', True, (0, 255, 252))
             highscore_rect = highscore_surface.get_rect(center=(WINDOW_WIDTH - 140, 40))
             screen.blit(highscore_surface, highscore_rect)
 
@@ -1373,7 +1400,8 @@ if __name__ == "__main__":
     # добавление объектов на главное менюз
     # menu.add_text_input('Name :', default='John Doe')
     menu.add_button('Play', main, surface, font_color=(45, 226, 230))
-    menu.add_selector('Difficulty :', [('Easy', 1), ('Medium', 2), ('Hard', 3)], onchange=set_difficulty)
+    menu.add_selector('Difficulty :', [('Easy', 1), ('Medium', 2),
+                                       ('Hard', 3)], onchange=set_difficulty)
     menu.add_button('Quit', pygame_menu.events.EXIT, font_color=(45, 226, 230))
 
     menu.mainloop(surface)
