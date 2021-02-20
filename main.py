@@ -13,8 +13,8 @@ FPS = 60
 # -----------------
 START_HEALTH = 30
 START_SPEED = 10
-START_SCORE = 1000
-START_LVL = 10
+START_SCORE = 0
+START_LVL = 1
 
 BULLET_SPEED = 8
 BG_SPEED = 3
@@ -316,6 +316,7 @@ class Buff(pygame.sprite.Sprite):
             self.rect = self.image.get_rect(center=(self.x, self.y))
             return (self.image, self.rect)
 
+
 # класс фона игры
 class BG(pygame.sprite.Sprite):
     def __init__(self, position, galaxy):
@@ -337,12 +338,10 @@ class BG(pygame.sprite.Sprite):
     # отрисовка
     def render(self, screen):
         global bg_imgs
-        image_bg = bg_imgs[self.galaxy-1]
+        image_bg = bg_imgs[self.galaxy - 1]
         self.image = pygame.transform.scale(image_bg, (WINDOW_WIDTH, WINDOW_HEIGHT))
-        self.rect = self.image.get_rect(center=(self.x+ WINDOW_WIDTH // 2 , self.y))
+        self.rect = self.image.get_rect(center=(self.x + WINDOW_WIDTH // 2, self.y))
         return (self.image, self.rect)
-
-
 
 
 # класс игры
@@ -388,7 +387,6 @@ class Game:
 
         # отрисовка главного героя
         self.hero.render(screen)
-
 
         # отрисовка всех врагов
         for enemy in self.enemies:
@@ -477,7 +475,6 @@ class Game:
                                 pygame.mixer.Sound.play(self.sounds['big_explosion'])
                                 self.boss_status = 2
                                 self.galaxy += 1
-
 
                                 # дополнительные очки за уничтожение босса
                                 self.hero.score += 96
@@ -636,7 +633,6 @@ class Game:
                     pygame.mixer.Sound.play(self.sounds['shot_to_hero'])
                     self.hero.health -= bullet.damage
 
-
                     # снятие здоровья у героя
                     if self.hero.health < 0:
                         self.hero.health = 0
@@ -673,7 +669,6 @@ class Game:
 
                         # запуск ульты 2 (запрет на телепортацию)
                         if event % 1500 == 1:
-
                             pygame.mixer.Sound.play(self.sounds['boss_lock'])
 
                             self.hero.locked_teleport = True
@@ -878,11 +873,11 @@ class Game:
                 # удалаение баффа
                 del self.buffs[i]
 
-
             # движение баффа
             if buff.mode == "dinamic":
                 buff.set_position(
                     (buff.get_position()[0], buff.get_position()[1] + buff.speed))
+
     def move_bg(self):
         # движение фонов(из всегда 2)
         for i, bg in enumerate(self.bgs):
@@ -890,17 +885,18 @@ class Game:
 
             # добавление 2 фона в начале игры
             if len(self.bgs) == 1:
-                self.add_bg(BG((0, -WINDOW_HEIGHT // 2,),self.galaxy))
+                self.add_bg(BG((0, -WINDOW_HEIGHT // 2,), self.galaxy))
 
             # замена фонов
             if bg.get_position()[1] > WINDOW_HEIGHT + WINDOW_HEIGHT // 2:
-                if self.bgs[i].galaxy < self.galaxy and self.bgs[i-1].galaxy != self.galaxy:
+                if self.bgs[i].galaxy < self.galaxy and self.bgs[i - 1].galaxy != self.galaxy:
                     pygame.mixer.Sound.play(self.sounds['next_galaxy'])
                     self.message = "NEXT GALAXY"
                     self.message_timer = 30
 
                 del self.bgs[i]
                 self.add_bg(BG((0, -WINDOW_HEIGHT // 2), self.galaxy))
+
     # добавить врага
     def add_enemy(self, *enemies):
         # максимальное количество врагов на экране( увеличивается с возрастанием очков)
@@ -949,14 +945,17 @@ def show_message(screen, message):
     pygame.draw.rect(screen, (30, 144, 255), (text_x - 10, text_y - 10, text_w + 20, text_h + 20))
     screen.blit(text, (text_x, text_y))
 
+
 def set_difficulty(value, difficult):
     global difficulty
     difficulty = difficult
     print(difficulty)
 
+
 def main(screen):
     # переменные изображения спрайтов
-    global image_player, images_enemies, image_asteroid, image_bullet, image_bullet_2, bg_imgs, image_buff, image_superasteroid
+    global image_player, images_enemies, image_asteroid, \
+        image_bullet, image_bullet_2, bg_imgs, image_buff, image_superasteroid
 
     # инитилизация PyGame
     # pygame.init()
@@ -1004,15 +1003,15 @@ def main(screen):
     sounds['boss_ulta'] = boss_ulta_sound
     sounds['next_galaxy'] = next_galaxy_sound
 
-
-
     # создание менеджера для элементов интерфейса
     manager = pygame_gui.UIManager((800, 600), 'data/theme.json')
 
     # создание кнопки начать игру заново
-    try_again_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 75, 480), (150, 40)),
-                                                    text='Try again',
-                                                    manager=manager)
+    try_again_button = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 75, 480), (150, 40)),
+        text='Try again',
+        manager=manager)
+
     # создание надписи в конце игры "GAME OVER" или "YOU WIN!"
     end_game_label = pygame_gui.elements.UILabel(
         relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 125, WINDOW_HEIGHT // 2 - 25), (250, 50)),
@@ -1025,12 +1024,10 @@ def main(screen):
         text='',
         manager=manager)
 
-
     with open('data/highscore.json') as hsfile:
 
         f = hsfile.read()
         highscore = json.loads(f)['highscore']
-
 
     # скрыть кнопку
     try_again_button.hide()
@@ -1103,7 +1100,6 @@ def main(screen):
                         pygame.mixer.music.pause()
                         pause = True
 
-
             # нажатие на кнопку try again
             if (event.type == pygame.USEREVENT and event.user_type == pygame_gui.UI_BUTTON_PRESSED and
                     event.ui_element == try_again_button):
@@ -1113,7 +1109,7 @@ def main(screen):
                 # разрешение на воспроизводство звука GameOver
                 game.sounds['gameover'][1] = False
 
-                pygame.mixer.music.play(-1 )
+                pygame.mixer.music.play(-1)
 
                 # дефолтные параметры игрока
                 game.hero.health = START_HEALTH
@@ -1208,8 +1204,6 @@ def main(screen):
 
                 enemy = Enemy((random.randint(0, 600), random.randint(0, 50)), game.galaxy)
 
-
-
                 # добавить врага
                 game.add_enemy(enemy)
             # создание астероида
@@ -1223,7 +1217,6 @@ def main(screen):
             screen.fill((0, 0, 0))
             # ---- СПРАЙТЫ----
             # начальноне окно
-
 
             # применение спрайта фонаов
             for bg in game.bgs:
@@ -1239,8 +1232,6 @@ def main(screen):
                     screen.blit(boss_health_surface, boss_health_rect)
             except IndexError:
                 pass
-
-
 
             # спрайт lvl
             game_font_lvl = pygame.font.Font('data/pixel_font.ttf', 70)
@@ -1277,7 +1268,6 @@ def main(screen):
             heart_rect = heart_image.get_rect(center=(WINDOW_WIDTH - 330, WINDOW_HEIGHT - 40))
             screen.blit(heart_image, heart_rect)
 
-
             # применение спрайта для героя
             screen.blit(hero.render(screen)[0], hero.render(screen)[1])
 
@@ -1306,7 +1296,6 @@ def main(screen):
 
             print(game.message_timer)
 
-
             # прорисовать все объекты
             game.render(screen)
 
@@ -1325,7 +1314,7 @@ def main(screen):
         else:
             if game.hero.score > highscore:
                 highscore = game.hero.score
-                dict = {"highscore":highscore}
+                dict = {"highscore": highscore}
                 with open('data/highscore.json', 'w') as f:
                     json.dump(dict, f)
 
@@ -1341,7 +1330,7 @@ def main(screen):
                     pygame.mixer.music.stop()
 
                     # звук Gameover
-                    if game.sounds["gameover"][1] is False: # проверка на повторение
+                    if game.sounds["gameover"][1] is False:  # проверка на повторение
                         pygame.mixer.Sound.play(game.sounds['gameover'][0])
                         # запрет на повторение
                         game.sounds["gameover"][1] = True
@@ -1371,8 +1360,8 @@ if __name__ == "__main__":
     mytheme.widget_font_size = 50
     mytheme.title_font_size = 70
 
-    mytheme.title_background_color = (3,94,232)
-    mytheme.background_color = (0,0,41)
+    mytheme.title_background_color = (3, 94, 232)
+    mytheme.background_color = (0, 0, 41)
 
     menu = pygame_menu.Menu(WINDOW_HEIGHT, WINDOW_WIDTH, 'April 12',
                             theme=mytheme)
@@ -1381,12 +1370,10 @@ if __name__ == "__main__":
     global difficulty
     difficulty = 1
 
-    # добавление объектов на главное меню
+    # добавление объектов на главное менюз
     # menu.add_text_input('Name :', default='John Doe')
-    menu.add_button('Play', main, surface, font_color=(45,226,230))
-    menu.add_selector('Difficulty :', [('Easy', 1),('Medium', 2),('Hard', 3)], onchange=set_difficulty)
-    menu.add_button('Quit', pygame_menu.events.EXIT, font_color=(45,226,230))
+    menu.add_button('Play', main, surface, font_color=(45, 226, 230))
+    menu.add_selector('Difficulty :', [('Easy', 1), ('Medium', 2), ('Hard', 3)], onchange=set_difficulty)
+    menu.add_button('Quit', pygame_menu.events.EXIT, font_color=(45, 226, 230))
 
     menu.mainloop(surface)
-
-
