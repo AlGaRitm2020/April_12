@@ -3,6 +3,7 @@ import pygame
 import pygame_menu
 import pygame_gui
 import random
+import json
 import time
 
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1000, 800
@@ -16,11 +17,11 @@ START_SCORE = 1000
 START_LVL = 10
 
 BULLET_SPEED = 8
-BG_SPEED = 1
+BG_SPEED = 3
 
 # появление боссов (очки)
 BOSS_OCCURRENCE = 0
-SUPERASTEROID_OCCURENSE = 2000
+SUPERASTEROID_OCCURENSE = 1000
 
 
 # ----------------
@@ -336,7 +337,7 @@ class BG(pygame.sprite.Sprite):
     # отрисовка
     def render(self, screen):
         global bg_imgs
-        image_bg = bg_imgs[self.galaxy]
+        image_bg = bg_imgs[self.galaxy-1]
         self.image = pygame.transform.scale(image_bg, (WINDOW_WIDTH, WINDOW_HEIGHT))
         self.rect = self.image.get_rect(center=(self.x+ WINDOW_WIDTH // 2 , self.y))
         return (self.image, self.rect)
@@ -373,6 +374,10 @@ class Game:
         self.superasteroid_status = 0
 
         self.galaxy = 1
+
+        # вывод сообщений (next galaxy, level up, highscore)
+        self.message = ''
+        self.message_timer = 0
 
     # отрисовка всех динамичных объектов
     def render(self, screen):
@@ -436,7 +441,7 @@ class Game:
                 for i in range(1, self.hero.lvl + 1):
                     pygame.mixer.Sound.play(self.sounds['hero_shot'])
                     self.bullets.append(Bullet((next_x + i * 10 - self.hero.lvl * 7, next_y), -1, self.hero.damage))
-                    # pygame.mixer.Sound.play(self.sounds['shot'])
+
                 self.hero.bullets_count += 32
         if self.hero.bullets_count >= 0:
             self.hero.bullets_count -= 1
@@ -489,8 +494,12 @@ class Game:
                     if abs(asteroid.get_position()[0] - bullet.get_position()[
                         0]) < asteroid.radius + bullet.radius and abs(
                         asteroid.get_position()[1] - bullet.get_position()[1]) < asteroid.radius + bullet.radius:
+
                         # уничтожение пули и нанесение урона астероиду
-                        del self.bullets[i]
+                        try:
+                            del self.bullets[i]
+                        except IndexError:
+                            pass
                         asteroid.hp -= self.hero.damage
 
                         # уничтожение астероида
@@ -655,6 +664,7 @@ class Game:
                     else:
                         # ульта 1 (гернерация врагов) без таймера
                         if event % 1200 == 1:
+                            pygame.mixer.Sound.play(self.sounds['boss_ulta'])
                             # созадание врагов 3 класса
                             boss_support_1 = Enemy((enemy.get_position()[0] + 10, enemy.get_position()[1]), 3)
                             boss_support_2 = Enemy((enemy.get_position()[0] - 10, enemy.get_position()[1]), 3)
@@ -830,8 +840,12 @@ class Game:
                 if buff.type == "HP":
                     # шанс на увеличение максимального кол-ва здоровья
                     event = random.randint(1, 5)
+                    self.message = 'HILL'
+                    self.message_timer = 30
                     if event == 4:
                         self.hero.max_health += 1
+                        self.message = 'MAX HEALTH UP'
+                        self.message_timer = 30
                     self.hero.health += 5
 
                 # увеличение уровня( кол-во пуль, скорость стрельбы)
@@ -839,10 +853,16 @@ class Game:
                     self.hero.lvl += 1
                     print(f"LVL UP")
 
+                    self.message = 'LVL UP'
+                    self.message_timer = 30
+
                 # увеличение скорости передвижения
                 elif buff.type == "SPEED UP":
                     self.hero.speed += 1
                     print(f"SPEED UP")
+
+                    self.message = 'SPEED UP'
+                    self.message_timer = 30
 
                 # комбо-бафф
                 elif buff.type == "COMBO":
@@ -851,6 +871,9 @@ class Game:
                     self.hero.lvl += 1
                     self.hero.speed += 1
                     print(f"COMBO BUFF")
+
+                    self.message = 'COMBO BUFF'
+                    self.message_timer = 30
 
                 # удалаение баффа
                 del self.buffs[i]
@@ -871,6 +894,10 @@ class Game:
 
             # замена фонов
             if bg.get_position()[1] > WINDOW_HEIGHT + WINDOW_HEIGHT // 2:
+                if self.bgs[i].galaxy < self.galaxy and self.bgs[i-1].galaxy != self.galaxy:
+                    pygame.mixer.Sound.play(self.sounds['next_galaxy'])
+                    self.message = "NEXT GALAXY"
+                    self.message_timer = 30
 
                 del self.bgs[i]
                 self.add_bg(BG((0, -WINDOW_HEIGHT // 2), self.galaxy))
@@ -950,6 +977,8 @@ def main(screen):
     pause_sound = pygame.mixer.Sound('sounds/pause.wav')
     boss_lock_sound = pygame.mixer.Sound('sounds/lock.wav')
     boss_lock_sound.set_volume(4)
+    boss_ulta_sound = pygame.mixer.Sound('sounds/boss_ulta.wav')
+    next_galaxy_sound = pygame.mixer.Sound('sounds/new_galaxy.wav')
     shot_to_hero = pygame.mixer.Sound("sounds/explosion_1.wav")
 
     hero_shot_sound = pygame.mixer.Sound('sounds/shot_2.wav')
@@ -972,11 +1001,13 @@ def main(screen):
     sounds['boss_lock'] = boss_lock_sound
     sounds['hero_shot'] = hero_shot_sound
     sounds['shot_to_hero'] = shot_to_hero
+    sounds['boss_ulta'] = boss_ulta_sound
+    sounds['next_galaxy'] = next_galaxy_sound
 
 
 
     # создание менеджера для элементов интерфейса
-    manager = pygame_gui.UIManager((800, 600), 'settings_for_endgame/theme.json')
+    manager = pygame_gui.UIManager((800, 600), 'data/theme.json')
 
     # создание кнопки начать игру заново
     try_again_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 75, 480), (150, 40)),
@@ -987,6 +1018,18 @@ def main(screen):
         relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 125, WINDOW_HEIGHT // 2 - 25), (250, 50)),
         text='',
         manager=manager)
+
+    # создание надписи в конце игры "GAME OVER" или "YOU WIN!"
+    message_label = pygame_gui.elements.UILabel(
+        relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 125, WINDOW_HEIGHT // 2 - 25), (250, 50)),
+        text='',
+        manager=manager)
+
+
+    with open('data/highscore.json') as hsfile:
+
+        f = hsfile.read()
+        highscore = json.loads(f)['highscore']
 
 
     # скрыть кнопку
@@ -1003,9 +1046,9 @@ def main(screen):
     image_player = pygame.image.load('img/ship-min.png').convert_alpha()
     images_enemies = [
         pygame.image.load('img/shipB1.png').convert_alpha(),  # враг 1 класса(самый слабый)
-        pygame.image.load('img/shipB2.png').convert_alpha(),  # враг 2 класса
+        pygame.image.load('img/shipB2_new.png').convert_alpha(),  # враг 2 класса
         pygame.image.load('img/shipB3.png').convert_alpha(),  # враг 3 класса
-        pygame.image.load('img/shipB4.png').convert_alpha()  # враг 4 класса (БОСС)
+        pygame.image.load('img/shipB1.png').convert_alpha()  # враг 4 класса (БОСС)
     ]
     image_asteroid = pygame.image.load('img/asteroid.png').convert_alpha()
     image_superasteroid = pygame.image.load('img/superasteroid.png').convert_alpha()
@@ -1014,9 +1057,9 @@ def main(screen):
 
     # фоны у галактик
     bg_imgs = [
-        pygame.image.load("img/bg-B1.png").convert_alpha(),
-        pygame.image.load("img/bg-min.png").convert_alpha(),
-        pygame.image.load("img/bg-B2.png").convert_alpha()
+        pygame.image.load("img/bg_red.png").convert_alpha(),
+        pygame.image.load("img/bg_blue.png").convert_alpha(),
+        pygame.image.load("img/bg_green.png").convert_alpha()
     ]
     image_buff = pygame.image.load("img/buff.png").convert_alpha()
     # ----------
@@ -1189,7 +1232,7 @@ def main(screen):
             try:
                 if game.boss_status == 1:
                     # спрайт lvl
-                    game_font_boss_health = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
+                    game_font_boss_health = pygame.font.Font('data/pixel_font.ttf', 70)
                     boss_health_surface = game_font_boss_health.render(f'Boss HP: {game.enemies[0].hp}', True,
                                                                        (0, 255, 252))
                     boss_health_rect = boss_health_surface.get_rect(center=(WINDOW_WIDTH - 640, WINDOW_HEIGHT - 40))
@@ -1200,25 +1243,31 @@ def main(screen):
 
 
             # спрайт lvl
-            game_font_lvl = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
+            game_font_lvl = pygame.font.Font('data/pixel_font.ttf', 70)
             lvl_surface = game_font_lvl.render(f'lvl: {hero.lvl}', True, (255, 20, 147))
             lvl_rect = lvl_surface.get_rect(center=(WINDOW_WIDTH - 440, WINDOW_HEIGHT - 40))
             screen.blit(lvl_surface, lvl_rect)
 
             # спрайт fps
-            game_font_fps = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
+            game_font_fps = pygame.font.Font('data/pixel_font.ttf', 70)
             fps_surface = game_font_fps.render(f'FPS: {int(clock.get_fps())}', True, (0, 255, 252))
             fps_rect = fps_surface.get_rect(center=(70, 40))
             screen.blit(fps_surface, fps_rect)
 
+            # спрайт highscore
+            game_font_highscore = pygame.font.Font('data/pixel_font.ttf', 70)
+            highscore_surface = game_font_highscore.render(f'HIGHSCORE: {highscore}', True, (0, 255, 252))
+            highscore_rect = highscore_surface.get_rect(center=(WINDOW_WIDTH - 140, 40))
+            screen.blit(highscore_surface, highscore_rect)
+
             # спрайт колво очков
-            game_font_score = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
+            game_font_score = pygame.font.Font('data/pixel_font.ttf', 70)
             score_surface = game_font_score.render(f'Score: {hero.score}', True, (0, 255, 252))
             score_rect = score_surface.get_rect(center=(WINDOW_WIDTH - 120, WINDOW_HEIGHT - 40))
             screen.blit(score_surface, score_rect)
 
             # спрайт здоровье
-            game_font_health = pygame.font.Font('settings_for_endgame/pixel_font.ttf', 70)
+            game_font_health = pygame.font.Font('data/pixel_font.ttf', 70)
             health_surface = game_font_health.render(str(hero.health), True, (0, 255, 0))
             health_rect = health_surface.get_rect(center=(WINDOW_WIDTH - 270, WINDOW_HEIGHT - 40))
             screen.blit(health_surface, health_rect)
@@ -1255,12 +1304,31 @@ def main(screen):
                 screen.blit(buff.render(screen)[0], buff.render(screen)[1])
             # --------
 
+            print(game.message_timer)
+
+
             # прорисовать все объекты
             game.render(screen)
+
+            # сообщения
+            if game.message_timer != 0:
+                message_label.set_text(game.message)
+                game.message_timer -= 1
+                message_label.show()
+                show_message(screen, game.message)
+            else:
+                message_label.hide()
+
             clock.tick(FPS)
 
         # конец игры
         else:
+            if game.hero.score > highscore:
+                highscore = game.hero.score
+                dict = {"highscore":highscore}
+                with open('data/highscore.json', 'w') as f:
+                    json.dump(dict, f)
+
             # проверка на победу
             if pause:
                 end_game_label.set_text("PAUSE")
@@ -1314,6 +1382,7 @@ if __name__ == "__main__":
     difficulty = 1
 
     # добавление объектов на главное меню
+    # menu.add_text_input('Name :', default='John Doe')
     menu.add_button('Play', main, surface, font_color=(45,226,230))
     menu.add_selector('Difficulty :', [('Easy', 1),('Medium', 2),('Hard', 3)], onchange=set_difficulty)
     menu.add_button('Quit', pygame_menu.events.EXIT, font_color=(45,226,230))
