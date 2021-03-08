@@ -10,6 +10,7 @@ FPS = 60
 
 # для разработчиков
 # -----------------
+
 START_HEALTH = 30
 START_SPEED = 10
 START_SCORE = 0
@@ -24,8 +25,11 @@ SUPERASTEROID_OCCURENSE = 1000
 
 
 # ----------------
-# класс главного героя
+
+
 class Hero(pygame.sprite.Sprite):
+    global START_HEALTH, START_SPEED, START_SCORE, START_LVL
+
     def __init__(self, position):
         pygame.sprite.Sprite.__init__(self)
         # координаты главного героя
@@ -972,7 +976,6 @@ def show_message(screen, message):
 def set_difficulty(value, difficult):
     global difficulty
     difficulty = difficult
-    print(difficulty)
 
 
 def main(screen):
@@ -984,7 +987,7 @@ def main(screen):
     # pygame.init()
     # pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
-    pygame.mixer.music.load("sounds/soundtrack.mp3")
+    pygame.mixer.music.load("sounds/soundtrack.ogg")
     pygame.mixer.music.set_volume(.3)
 
     pygame.mixer.music.play(-1)
@@ -1320,8 +1323,6 @@ def main(screen):
                 screen.blit(buff.render(screen)[0], buff.render(screen)[1])
                 screen.blit(buff.render(screen)[0], buff.render(screen)[1])
             # --------
-
-            print(game.message_timer)
 
             # прорисовать все объекты
             game.render(screen)
